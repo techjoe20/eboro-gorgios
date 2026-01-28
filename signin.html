@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>تسجيل دخول الطالب | مدرسة الكنيسة</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
@@ -20,31 +20,64 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 15px; /* مسافة أمان للموبايل */
+            box-sizing: border-box;
         }
 
         .login_container {
             background-color: #FFFFFF;
-            padding: 30px;
+            padding: 30px 20px;
             border-radius: 25px;
             box-shadow: 0 20px 40px rgba(93, 64, 55, 0.15);
-            width: 90%;
-            max-width: 450px;
+            width: 100%;
+            max-width: 400px; /* العرض المثالي للموبايل والتابلت */
             border-top: 10px solid #D4AF37;
             animation: fadeInPage 0.8s ease-out;
             text-align: center;
+            box-sizing: border-box;
         }
 
-        .form_group { text-align: right; margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #5D4037; font-weight: 600; }
+        .login_header h2 {
+            color: #5D4037;
+            font-size: clamp(20px, 5vw, 24px); /* حجم خط مرن */
+            margin-bottom: 10px;
+        }
+
+        .login_header p {
+            color: #8D6E63;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .form_group { 
+            text-align: right; 
+            margin-bottom: 20px; 
+        }
+
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: #5D4037; 
+            font-weight: 600; 
+            font-size: 14px;
+        }
         
         input[type="text"] {
             width: 100%;
-            padding: 12px;
+            padding: 14px; /* زيادة مساحة اللمس للموبايل */
             border: 2px solid #E0E0E0;
             border-radius: 12px;
             box-sizing: border-box;
             text-align: center;
-            font-size: 15px;
+            font-size: 16px; /* منع الـ Zoom التلقائي في الآيفون */
+            background-color: #FAFAFA;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #D4AF37;
+            outline: none;
+            background-color: #FFF;
         }
 
         .login_btn {
@@ -57,11 +90,30 @@
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 20px;
-            transition: 0.3s;
+            margin-top: 10px;
+            transition: transform 0.2s, opacity 0.3s;
+            -webkit-tap-highlight-color: transparent; /* إلغاء الوميض عند اللمس في الموبايل */
         }
 
-        .login_btn:disabled { background: #ccc; cursor: not-allowed; }
+        .login_btn:active {
+            transform: scale(0.98); /* تأثير ضغطة الزر */
+        }
+
+        .login_btn:disabled { 
+            background: #ccc; 
+            cursor: not-allowed; 
+            transform: none;
+        }
+
+        /* تحسينات للشاشات الصغيرة جداً */
+        @media (max-width: 360px) {
+            .login_container {
+                padding: 20px 15px;
+            }
+            .login_header h2 {
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -80,7 +132,7 @@
 
             <div class="form_group">
                 <label for="STU_CODE">كود الطالب</label>
-                <input type="text" id="STU_CODE" placeholder="أدخل الـ 6 أرقام الخاصة بك" required>
+                <input type="text" id="STU_CODE" placeholder="أدخل الـ 6 أرقام الخاصة بك" required inputmode="numeric">
             </div>
 
             <button type="submit" id="submitBtn" class="login_btn">تحقق ودخول</button>
@@ -91,7 +143,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // إعدادات الفايربيز الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
             authDomain: "eboro-93073.firebaseapp.com",
@@ -118,15 +169,12 @@
             submitBtn.innerText = "جاري التحقق...";
 
             try {
-                // البحث في مسار الطلاب باستخدام الكود المدخل كـ Key
                 const studentRef = ref(db, 'students/' + codeInput);
                 const snapshot = await get(studentRef);
 
                 if (snapshot.exists()) {
                     const studentData = snapshot.val();
                     
-                    // التحقق من الاسم (نتأكد أن الاسم المدخل موجود في الاسم الرباعي المسجل)
-                    // ملاحظة: USR01 هو الحقل الذي استخدمناه في صفحة التسجيل
                     if (studentData.USR01 === nameInput) {
                         Swal.fire({
                             icon: 'success',
@@ -135,7 +183,6 @@
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
-                            // التوجه لصفحة البروفايل مع إرسال الكود في الرابط
                             window.location.href = `student_profile.html?code=${codeInput}`;
                         });
                     } else {

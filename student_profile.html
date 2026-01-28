@@ -2,24 +2,25 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>صفحة الطالب | مدرسة الكنيسة</title>
     <style>
         /* أنيميشن */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: #F4F1EA;
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            overflow-x: hidden; /* منع التمرير العرضي */
         }
 
         /* الشريط العلوي */
         header {
             background-color: #FFFFFF;
-            padding: 15px 30px;
+            padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -31,24 +32,28 @@
 
         .student_info_bar {
             display: flex;
-            align-items: center;
-            gap: 15px;
+            flex-direction: column; /* ترتيب رأسي في الموبايل */
+            align-items: flex-start;
+            gap: 2px;
         }
 
         .student_name_top {
             color: #5D4037;
             font-weight: 800;
-            font-size: 18px;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
         }
 
         .student_code_top {
             background: #D4AF37;
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
             font-weight: bold;
-            letter-spacing: 1px;
         }
 
         /* زر المنيو */
@@ -56,115 +61,149 @@
             background: #5D4037;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 10px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 14px;
+            font-weight: bold;
             transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .menu_btn:hover { background: #D4AF37; }
-
-        /* المنيو الجانبية */
+        /* المنيو الجانبية (من اليمين) */
         .side_menu {
             position: fixed;
             top: 0;
-            left: -300px; /* مخفية في البداية */
-            width: 280px;
+            right: -100%; /* مخفية لجهة اليمين */
+            width: 80%; /* تأخذ معظم الشاشة في الموبايل */
+            max-width: 280px;
             height: 100%;
             background: #FFFFFF;
-            box-shadow: 20px 0 40px rgba(0,0,0,0.1);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
             z-index: 1000;
             transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 30px 20px;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        .side_menu.active { left: 0; }
+        .side_menu.active { right: 0; }
 
         .close_btn {
-            background: none;
+            background: #f4f1ea;
             border: none;
-            font-size: 25px;
-            color: #8D6E63;
+            font-size: 20px;
+            color: #5D4037;
             cursor: pointer;
-            float: left;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
-        /* كارت الطالب داخل المنيو */
         .student_profile_card {
             text-align: center;
-            margin-top: 40px;
             padding-bottom: 20px;
             border-bottom: 1px solid #F4F1EA;
         }
 
         .student_img {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            border: 4px solid #D4AF37;
+            border: 3px solid #D4AF37;
             object-fit: cover;
-            margin-bottom: 15px;
             background-color: #EEE;
         }
 
-        .student_profile_card h3 { color: #5D4037; margin: 10px 0 5px 0; }
-        .student_profile_card p { color: #D4AF37; font-weight: bold; margin: 0; font-size: 14px; }
+        .student_profile_card h3 { 
+            color: #5D4037; 
+            margin: 10px 0 5px 0; 
+            font-size: 16px;
+        }
+        
+        .student_profile_card p { 
+            color: #D4AF37; 
+            font-weight: bold; 
+            font-size: 13px; 
+            margin: 0;
+        }
 
         /* روابط المنيو */
-        .menu_links { margin-top: 30px; list-style: none; padding: 0; }
-        .menu_links li { margin-bottom: 10px; }
+        .menu_links { margin-top: 20px; list-style: none; padding: 0; }
         .menu_links a {
             display: block;
-            padding: 12px 15px;
+            padding: 12px;
             color: #5D4037;
             text-decoration: none;
             border-radius: 10px;
-            transition: 0.3s;
+            margin-bottom: 5px;
             font-weight: 600;
+            font-size: 15px;
+            transition: 0.3s;
         }
-        .menu_links a:hover { background: #FDFBF0; color: #D4AF37; padding-right: 20px; }
+        .menu_links a:hover { background: #FDFBF0; color: #D4AF37; }
 
-        /* غطاء خلفي للمنيو */
+        /* غطاء خلفي */
         .overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.5);
             display: none;
             z-index: 999;
+            backdrop-filter: blur(2px);
         }
-
         .overlay.active { display: block; }
 
-        /* محتوى الصفحة الرئيسي */
+        /* المحتوى الرئيسي */
         main {
-            padding: 40px 20px;
-            max-width: 1000px;
-            margin: 0 auto;
+            padding: 20px 15px;
             animation: fadeIn 0.8s ease;
         }
 
         .welcome_box {
             background: white;
-            padding: 30px;
-            border-radius: 20px;
-            border-right: 8px solid #D4AF37;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border-right: 5px solid #D4AF37;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
 
-        .welcome_box h1 { color: #5D4037; margin: 0; }
-        .welcome_box p { color: #8D6E63; margin-top: 10px; }
+        .welcome_box h1 { 
+            color: #5D4037; 
+            font-size: 20px; 
+            margin: 0; 
+        }
+        
+        .welcome_box p { 
+            color: #8D6E63; 
+            font-size: 14px; 
+            line-height: 1.6;
+            margin-top: 10px; 
+        }
 
+        /* تعديلات للشاشات الكبيرة */
+        @media (min-width: 768px) {
+            .student_info_bar { flex-direction: row; gap: 15px; }
+            .student_name_top { font-size: 18px; max-width: none; }
+            header { padding: 15px 40px; }
+            main { padding: 40px; }
+        }
     </style>
 </head>
 <body>
 
     <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    
     <div class="side_menu" id="sideMenu">
-        <button class="close_btn" onclick="toggleMenu()">×</button>
+        <button class="close_btn" onclick="toggleMenu()">✕</button>
         
         <div class="student_profile_card">
             <img id="profile_image" src="https://via.placeholder.com/100" alt="صورة الطالب" class="student_img">
@@ -173,11 +212,11 @@
         </div>
 
         <ul class="menu_links">
-            <li><a href="#">لوحة التحكم</a></li>
-            <li><a href="#">دروسي ومناهجي</a></li>
-            <li><a href="#">النتائج والتقييمات</a></li>
-            <li><a href="#">تعديل البيانات</a></li>
-            <li><a href="#" style="color: #e74c3c;">تسجيل الخروج</a></li>
+            <li><a href="#">🏠 لوحة التحكم</a></li>
+            <li><a href="#">📚 دروسي ومناهجي</a></li>
+            <li><a href="#">🏆 النتائج والتقييمات</a></li>
+            <li><a href="#">⚙️ تعديل البيانات</a></li>
+            <li><a href="login.html" style="color: #e74c3c; margin-top: 20px;">🚪 تسجيل الخروج</a></li>
         </ul>
     </div>
 
@@ -201,7 +240,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // إعدادات الفايربيز الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
             authDomain: "eboro-93073.firebaseapp.com",
@@ -215,14 +253,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // وظيفة جلب البيانات
         async function loadStudentData() {
-            // جلب كود الطالب من الرابط (مثال: profile.html?code=0123456)
             const urlParams = new URLSearchParams(window.location.search);
             const studentCode = urlParams.get('code');
 
             if (!studentCode) {
-                alert("لم يتم العثور على كود الطالب!");
+                document.body.innerHTML = "<div style='text-align:center; padding-top:50px;'>خطأ: لم يتم العثور على كود الطالب.</div>";
                 return;
             }
 
@@ -232,38 +268,29 @@
 
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    
-                    // تحديث الاسم في كل الأماكن
-                    document.getElementById('top_name').innerText = data.USR01 || "طالب غير معروف";
-                    document.getElementById('menu_name').innerText = data.USR01 || "طالب غير معروف";
-                    
-                    // تحديث الكود
+                    document.getElementById('top_name').innerText = data.USR01 || "طالب";
+                    document.getElementById('menu_name').innerText = data.USR01 || "طالب";
                     document.getElementById('top_code').innerText = studentCode;
                     document.getElementById('menu_code').innerText = studentCode;
 
-                    // تحديث الصورة (لو موجودة)
                     if (data.IMG_URL) {
                         document.getElementById('profile_image').src = data.IMG_URL;
                     }
                 } else {
-                    console.log("No data available");
-                    document.getElementById('menu_name').innerText = "بيانات غير موجودة";
+                    document.getElementById('menu_name').innerText = "غير موجود";
                 }
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error:", error);
             }
         }
 
-        // تشغيل الجلب عند تحميل الصفحة
         window.onload = loadStudentData;
-    </script>
 
-    <script>
-        function toggleMenu() {
+        // جعل دالة toggleMenu متاحة عالمياً
+        window.toggleMenu = function() {
             document.getElementById('sideMenu').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
         }
     </script>
-
 </body>
 </html>
