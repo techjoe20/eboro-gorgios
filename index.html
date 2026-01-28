@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع مدرسة ابؤورو جورجيوس</title>
+    <style>
+        /* أنيميشن الظهور */
+        @keyframes reveal {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal_node {
+            animation: reveal linear both;
+            animation-timeline: view();
+            animation-range: entry 20% cover 40%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #F9F7F2;
+            color: #333;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* المنيو المطور */
+        .nav_bar {
+            background-color: rgba(93, 64, 55, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 5%;
+            color: white;
+            position: fixed;
+            width: 90%;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+        }
+
+        .nav_right, .nav_left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav_links {
+            list-style: none;
+            display: flex;
+            gap: 25px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav_links a, .auth_links a {
+            color: #D7CCC8;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+
+        .nav_links a:hover, .auth_links a:hover { color: #FFD700; }
+
+        .auth_links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn_signup {
+            background-color: #D4AF37;
+            color: #3E2723 !important;
+            padding: 8px 18px;
+            border-radius: 5px;
+            transition: 0.3s !important;
+        }
+
+        .btn_signup:hover {
+            background-color: #FFD700;
+            transform: scale(1.05);
+        }
+
+        /* --- تعديل الخلفية بالصورة التي أرسلتها --- */
+        .hero_section {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        url('https://i.ibb.co/yr6WmqK/backg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+        .hero_section h1 { 
+            font-size: 4rem; 
+            margin-bottom: 10px; 
+            text-shadow: 3px 3px 20px rgba(0,0,0,1);
+        }
+        
+        .hero_section p { font-size: 1.5rem; font-style: italic; }
+
+        /* المحتوى */
+        .about_school { padding: 100px 10%; text-align: center; background: white; }
+        .container { padding: 60px 5%; }
+        .section_title { text-align: center; border-bottom: 3px solid #D4AF37; display: inline-block; margin-bottom: 50px; padding-bottom: 10px; font-size: 2rem; color: #3E2723; }
+        
+        .schedule_grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 30px; 
+        }
+
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+            border-top: 5px solid #D4AF37;
+            transition: 0.4s;
+        }
+        .card:hover { transform: translateY(-10px); }
+
+        .footer { 
+            background-color: #3E2723; 
+            color: #D7CCC8; 
+            text-align: center; 
+            padding: 40px 20px; 
+        }
+
+        @media (max-width: 850px) {
+            .nav_links { display: none; }
+            .nav_bar { width: 100%; padding: 10px 3%; }
+            .hero_section h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav_bar">
+        <div class="nav_right">
+            <div class="logo" style="font-weight: bold; font-size: 20px; color: #FFD700; margin-left: 20px;">مدرسة ابؤورو جورجيوس</div>
+            <ul class="nav_links">
+                <li><a href="#">الرئيسية</a></li>
+                <li><a href="#">صفحة الخدمات</a></li>
+                <li><a href="#">العظات</a></li>
+                <li><a href="#">اتصل بنا</a></li>
+            </ul>
+        </div>
+
+        <div class="nav_left auth_links">
+            <a href="signin.html">تسجيل الدخول</a>
+            <a href="form.html" class="btn_signup">إنشاء حساب</a>
+        </div>
+    </nav>
+
+    <header class="hero_section">
+        <h1 class="reveal_node">"أَنَا هُوَ نُورُ الْعَالَمِ"</h1>
+        <p class="reveal_node">مرحباً بكم في الصرح الروحي لمدرسة ابؤورو جورجيوس</p>
+    </header>
+
+    <section class="about_school reveal_node">
+        <h2 class="section_title">عن مدرستنا</h2>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: #5D4037; max-width: 850px; margin: 0 auto;">
+            نسعى في مدرسة <b>ابؤورو جورجيوس</b> لتقديم رسالة روحية وتعليمية متكاملة، تربط الأجيال بجذور كنيستنا الأرثوذكسية تحت شفاعة الشهيد العظيم مارجرجس.
+        </p>
+    </section>
+
+    <main class="container">
+        <center><h2 class="section_title reveal_node">مواعيد الخدمات الثابتة</h2></center>
+        <div class="schedule_grid">
+            <div class="card reveal_node">
+                <h3 style="color: #5D4037;">قداس الأحد</h3>
+                <p>القداس الأول: 7:00 ص - 10:00 ص</p>
+            </div>
+            <div class="card reveal_node">
+                <h3 style="color: #5D4037;">قداس الجمعة</h3>
+                <p>من 8:00 ص - 11:00 ص</p>
+            </div>
+            <div class="card reveal_node">
+                <h3 style="color: #5D4037;">اجتماع الشباب</h3>
+                <p>كل خميس الساعة 7:00 مساءً</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>جميع الحقوق محفوظة لمدرسة ابؤورو جورجيوس © 2026</p>
+    </footer>
+
+</body>
+</html>

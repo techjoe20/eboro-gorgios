@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة الطالب | مدرسة الكنيسة</title>
+    <style>
+        /* أنيميشن */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F4F1EA;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* الشريط العلوي */
+        header {
+            background-color: #FFFFFF;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(93, 64, 55, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .student_info_bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .student_name_top {
+            color: #5D4037;
+            font-weight: 800;
+            font-size: 18px;
+        }
+
+        .student_code_top {
+            background: #D4AF37;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* زر المنيو */
+        .menu_btn {
+            background: #5D4037;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: 0.3s;
+        }
+
+        .menu_btn:hover { background: #D4AF37; }
+
+        /* المنيو الجانبية */
+        .side_menu {
+            position: fixed;
+            top: 0;
+            left: -300px; /* مخفية في البداية */
+            width: 280px;
+            height: 100%;
+            background: #FFFFFF;
+            box-shadow: 20px 0 40px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 30px 20px;
+        }
+
+        .side_menu.active { left: 0; }
+
+        .close_btn {
+            background: none;
+            border: none;
+            font-size: 25px;
+            color: #8D6E63;
+            cursor: pointer;
+            float: left;
+        }
+
+        /* كارت الطالب داخل المنيو */
+        .student_profile_card {
+            text-align: center;
+            margin-top: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #F4F1EA;
+        }
+
+        .student_img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid #D4AF37;
+            object-fit: cover;
+            margin-bottom: 15px;
+            background-color: #EEE;
+        }
+
+        .student_profile_card h3 { color: #5D4037; margin: 10px 0 5px 0; }
+        .student_profile_card p { color: #D4AF37; font-weight: bold; margin: 0; font-size: 14px; }
+
+        /* روابط المنيو */
+        .menu_links { margin-top: 30px; list-style: none; padding: 0; }
+        .menu_links li { margin-bottom: 10px; }
+        .menu_links a {
+            display: block;
+            padding: 12px 15px;
+            color: #5D4037;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: 0.3s;
+            font-weight: 600;
+        }
+        .menu_links a:hover { background: #FDFBF0; color: #D4AF37; padding-right: 20px; }
+
+        /* غطاء خلفي للمنيو */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.active { display: block; }
+
+        /* محتوى الصفحة الرئيسي */
+        main {
+            padding: 40px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .welcome_box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            border-right: 8px solid #D4AF37;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .welcome_box h1 { color: #5D4037; margin: 0; }
+        .welcome_box p { color: #8D6E63; margin-top: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="side_menu" id="sideMenu">
+        <button class="close_btn" onclick="toggleMenu()">×</button>
+        
+        <div class="student_profile_card">
+            <img id="profile_image" src="https://via.placeholder.com/100" alt="صورة الطالب" class="student_img">
+            <h3 id="menu_name">جاري التحميل...</h3>
+            <p id="menu_code">CODE-XXXX</p>
+        </div>
+
+        <ul class="menu_links">
+            <li><a href="#">لوحة التحكم</a></li>
+            <li><a href="#">دروسي ومناهجي</a></li>
+            <li><a href="#">النتائج والتقييمات</a></li>
+            <li><a href="#">تعديل البيانات</a></li>
+            <li><a href="#" style="color: #e74c3c;">تسجيل الخروج</a></li>
+        </ul>
+    </div>
+
+    <header>
+        <div class="student_info_bar">
+            <span class="student_name_top">أهلاً، <span id="top_name">...</span></span>
+            <span class="student_code_top" id="top_code">...</span>
+        </div>
+
+        <button class="menu_btn" onclick="toggleMenu()">☰ القائمة</button>
+    </header>
+
+    <main>
+        <div class="welcome_box">
+            <h1>مرحباً بك في مدرستك الروحية</h1>
+            <p>هنا ستجد كافة الدروس والمتابعات الخاصة بك. ابدأ رحلتك التعليمية الآن!</p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // إعدادات الفايربيز الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+            authDomain: "eboro-93073.firebaseapp.com",
+            databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+            projectId: "eboro-93073",
+            storageBucket: "eboro-93073.firebasestorage.app",
+            messagingSenderId: "502542505811",
+            appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // وظيفة جلب البيانات
+        async function loadStudentData() {
+            // جلب كود الطالب من الرابط (مثال: profile.html?code=0123456)
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentCode = urlParams.get('code');
+
+            if (!studentCode) {
+                alert("لم يتم العثور على كود الطالب!");
+                return;
+            }
+
+            try {
+                const studentRef = ref(db, 'students/' + studentCode);
+                const snapshot = await get(studentRef);
+
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    
+                    // تحديث الاسم في كل الأماكن
+                    document.getElementById('top_name').innerText = data.USR01 || "طالب غير معروف";
+                    document.getElementById('menu_name').innerText = data.USR01 || "طالب غير معروف";
+                    
+                    // تحديث الكود
+                    document.getElementById('top_code').innerText = studentCode;
+                    document.getElementById('menu_code').innerText = studentCode;
+
+                    // تحديث الصورة (لو موجودة)
+                    if (data.IMG_URL) {
+                        document.getElementById('profile_image').src = data.IMG_URL;
+                    }
+                } else {
+                    console.log("No data available");
+                    document.getElementById('menu_name').innerText = "بيانات غير موجودة";
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        // تشغيل الجلب عند تحميل الصفحة
+        window.onload = loadStudentData;
+    </script>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sideMenu').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+    </script>
+
+</body>
+</html>

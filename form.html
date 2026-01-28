@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل بيانات الخادم | الكنيسة</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* التنسيقات والأنيميشن كما هي تماماً بدون تغيير حرف */
+        @keyframes fadeInPage { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #F4F1EA; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .form_container { background-color: #FFFFFF; padding: 40px; border-radius: 25px; box-shadow: 0 20px 40px rgba(93, 64, 55, 0.15); width: 100%; max-width: 650px; border-top: 10px solid #D4AF37; animation: fadeInPage 0.8s ease-out; }
+        .form_header { text-align: center; margin-bottom: 35px; }
+        .form_header h2 { color: #5D4037; font-size: 28px; font-weight: 800; }
+        .form_grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full_width { grid-column: span 2; }
+        label { display: block; margin-bottom: 8px; color: #5D4037; font-weight: 600; font-size: 14px; }
+        input, select { width: 100%; padding: 12px 15px; border: 2px solid #E0E0E0; border-radius: 12px; box-sizing: border-box; background-color: #FAFAFA; }
+        .dob_container { display: flex; gap: 10px; }
+        .upload_wrapper { position: relative; width: 100%; height: 100px; border: 2px dashed #D4AF37; border-radius: 15px; background-color: #FFFDF5; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .upload_wrapper input[type="file"] { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .submit_btn { background: linear-gradient(135deg, #5D4037 0%, #3E2723 100%); color: white; padding: 16px; border: none; border-radius: 15px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 25px; }
+        .form_id { text-align: center; font-size: 11px; color: #BDBDBD; margin-top: 20px; }
+        @media (max-width: 600px) { .form_grid { grid-template-columns: 1fr; } .full_width { grid-column: span 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="form_container">
+        <div class="form_header">
+            <h2>استمارة بيانات طلاب المدرسة</h2>
+            <p>سجل بياناتك للخدمة والمتابعة الروحية</p>
+        </div>
+
+        <form id="registrationForm">
+            <div class="form_grid">
+                <div class="form_group full_width">
+                    <label for="USR01">الاسم رباعي</label>
+                    <input type="text" id="USR01" placeholder="اكتب الاسم رباعي" required>
+                </div>
+                <div class="form_group">
+                    <label for="TEL01">رقم تليفون الطالب</label>
+                    <input type="tel" id="TEL01" placeholder="01XXXXXXXXX" required>
+                </div>
+                <div class="form_group">
+                    <label for="TEL02">رقم تليفون ولي الأمر</label>
+                    <input type="tel" id="TEL02" placeholder="01XXXXXXXXX" required>
+                </div>
+                <div class="form_group full_width">
+                    <label for="ADR01">العنوان بالتفصيل</label>
+                    <input type="text" id="ADR01" placeholder="المحافظة / المدينة / الشارع" required>
+                </div>
+                <div class="form_group">
+                    <label for="FR01">أب الاعتراف</label>
+                    <input type="text" id="FR01" placeholder="قدس ابونا...">
+                </div>
+                <div class="form_group">
+                    <label>تاريخ الميلاد</label>
+                    <div class="dob_container">
+                        <select id="DAY01" required><option value="">يوم</option><script>for(let i=1;i<=31;i++) document.write(`<option value="${i}">${i}</option>`);</script></select>
+                        <select id="MON01" required><option value="">شهر</option><option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option><option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option><option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option></select>
+                        <select id="YEA01" required><option value="">سنة</option><script>for(let i=2026;i>=1990;i--) document.write(`<option value="${i}">${i}</option>`);</script></select>
+                    </div>
+                </div>
+                <div class="form_group">
+                    <label for="YR01">السنة الدراسية</label>
+                    <input type="text" id="YR01" placeholder="مثال: الصف الأول">
+                </div>
+                <div class="form_group">
+                    <label for="STG01">المرحلة الدراسية</label>
+                    <input type="text" id="STG01" placeholder="مثال: إعدادي / ثانوي">
+                </div>
+                <div class="form_group">
+                    <label for="RNK01">الموقف من الرسامة</label>
+                    <input type="text" id="RNK01" placeholder="رسامة سابقة أم لا">
+                </div>
+                <div class="form_group">
+                    <label for="BISH01">القائم بالرسامة</label>
+                    <input type="text" id="BISH01" placeholder="نيافة الحبر الجليل...">
+                </div>
+                <div class="form_group full_width">
+                    <label for="LVL01">مستويات تم اجتيازها</label>
+                    <input type="text" id="LVL01" placeholder="اذكر المستويات السابقة">
+                </div>
+                <div class="form_group full_width">
+                    <label>صورة الطالب الشخصية</label>
+                    <div class="upload_wrapper">
+                        <span class="upload_text" id="uploadStatus">اضغط هنا لاختيار صورة الطالب</span>
+                        <input type="file" id="IMG01" accept="image/*" required>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" id="submitBtn" class="submit_btn">إرسال البيانات للتسجيل</button>
+            <div class="form_id">REF DATA2026CH</div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref as dbRef, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+            authDomain: "eboro-93073.firebaseapp.com",
+            databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+            projectId: "eboro-93073",
+            storageBucket: "eboro-93073.firebasestorage.app",
+            messagingSenderId: "502542505811",
+            appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const form = document.getElementById('registrationForm');
+        const btn = document.getElementById('submitBtn');
+        const fileInput = document.getElementById('IMG01');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        fileInput.onchange = () => { if (fileInput.files[0]) uploadStatus.innerText = "تم اختيار: " + fileInput.files[0].name; };
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // دالة توليد كود عشوائي من 6 أرقام
+        const generateRandomCode = () => {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        };
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            // توليد الكود العشوائي المميز
+            const randomID = generateRandomCode();
+            const file = fileInput.files[0];
+
+            btn.disabled = true;
+            btn.innerText = "جاري الإرسال...";
+
+            try {
+                let base64Image = "";
+                if(file) base64Image = await toBase64(file);
+
+                const studentData = {
+                    USR01: document.getElementById('USR01').value,
+                    TEL01: document.getElementById('TEL01').value.trim(),
+                    TEL02: document.getElementById('TEL02').value,
+                    ADR01: document.getElementById('ADR01').value,
+                    FR01: document.getElementById('FR01').value,
+                    DOB: `${document.getElementById('DAY01').value}-${document.getElementById('MON01').value}-${document.getElementById('YEA01').value}`,
+                    YR01: document.getElementById('YR01').value,
+                    STG01: document.getElementById('STG01').value,
+                    RNK01: document.getElementById('RNK01').value,
+                    BISH01: document.getElementById('BISH01').value,
+                    LVL01: document.getElementById('LVL01').value,
+                    IMG_URL: base64Image,
+                    STUDENT_CODE: randomID, // حفظ الكود داخل البيانات أيضاً للرجوع إليه
+                    DATE_REF: new Date().toLocaleString()
+                };
+
+                // الحفظ باستخدام الكود العشوائي كـ Key
+                await set(dbRef(db, 'students/' + randomID), studentData);
+
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'تم التسجيل بنجاح', 
+                    text: 'كود الطالب الخاص بك هو: ' + randomID,
+                    confirmButtonText: 'ذهاب للبروفايل'
+                })
+                .then(() => { 
+                    window.location.href = `student_profile.html?code=${randomID}`; 
+                });
+
+            } catch (error) {
+                Swal.fire('خطأ', 'تأكد من إعدادات الفايربيز', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "إرسال البيانات للتسجيل";
+            }
+        };
+    </script>
+</body>
+</html>
