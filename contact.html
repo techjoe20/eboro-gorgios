@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مركز التواصل والدعم</title>
+    <style>
+        :root {
+            --bg01: #f8fafc;
+            --primary01: #1e293b;
+            --accent01: #d4af37;
+            --text01: #334155;
+            --box-bg: #ffffff;
+            --input-bg: #f1f5f9;
+            --wa-green: #25D366;
+            --tg-blue: #0088cc;
+            --success-color: #10b981;
+        }
+
+        /* تعديل ألوان الدارك مود (رمادي فحم بدلاً من الكحلي) */
+        body.dark_mode_active {
+            --bg01: #121212;         /* خلفية سوداء كربونية */
+            --primary01: #ffffff;    /* نصوص العناصر الأساسية */
+            --accent01: #d4af37;    /* لون ذهبي ثابت */
+            --text01: #e0e0e0;       /* لون نص رمادي فاتح */
+            --box-bg: #1e1e1e;      /* لون صناديق رمادي غامق جداً */
+            --input-bg: #2d2d2d;     /* لون الحقول */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg01);
+            color: var(--text01);
+            margin: 0; padding: 15px;
+            transition: 0.3s;
+        }
+
+        .container { max-width: 500px; margin: 0 auto; }
+
+        .section_box {
+            background: var(--box-bg);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .inquiry_box {
+            border-top: 4px solid var(--accent01);
+        }
+
+        h3 { margin-top: 0; color: var(--accent01); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; font-size: 1.25rem; }
+
+        .direct_links { display: flex; gap: 10px; margin-bottom: 20px; }
+        .link_card {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 0.95rem;
+            transition: transform 0.2s;
+        }
+        .link_card:active { transform: scale(0.96); }
+
+        .contact_form { display: flex; flex-direction: column; gap: 12px; }
+        .contact_form input, .contact_form textarea {
+            background: var(--input-bg);
+            border: 1.5px solid transparent;
+            padding: 14px;
+            border-radius: 10px;
+            color: var(--text01);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+        .contact_form input:focus, .contact_form textarea:focus {
+            outline: none; 
+            border-color: var(--accent01);
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
+        }
+
+        .submit_btn {
+            background: var(--primary01);
+            color: var(--bg01); /* ليكون لون النص معاكس للخلفية */
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        /* معالجة لون النص في الزر للوضع الفاتح */
+        body:not(.dark_mode_active) .submit_btn {
+            color: #ffffff;
+            background: #1e293b;
+        }
+
+        .submit_btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .submit_btn:active { transform: translateY(0); }
+
+        .wa { background: var(--wa-green); }
+        .tg { background: var(--tg-blue); }
+
+        #custom_toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--box-bg);
+            color: var(--text01);
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 9999;
+            border: 1px solid var(--accent01);
+            white-space: nowrap;
+        }
+        #custom_toast.show { bottom: 30px; }
+        .toast_icon { color: var(--accent01); font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+<script>
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark_mode_active');
+    }
+</script>
+
+<div class="container">
+    
+    <div class="section_box inquiry_box">
+        <h3>قسم الاستفسارات 💬</h3>
+        <div class="direct_links">
+            <a href="https://wa.me/201000000000" class="link_card wa">واتساب</a>
+            <a href="https://t.me/YourUser" class="link_card tg">تليجرام</a>
+        </div>
+        
+        <form class="contact_form" id="inquiryForm">
+            <input type="text" id="inq_name" placeholder="الاسم بالكامل" required>
+            <input type="number" id="inq_phone" placeholder="رقم الهاتف" required>
+            <textarea id="inq_msg" rows="4" placeholder="اكتب استفسارك هنا بكل وضوح..." required></textarea>
+            <button type="submit" class="submit_btn">
+                <span>ارسال الاستفسار</span>
+                <span>📤</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="section_box">
+        <h3>الدعم الفني (عطل فني) 🛠️</h3>
+        <p style="font-size: 0.85rem; margin-bottom: 15px; opacity: 0.8;">أبلغ عن مشكلة تقنية ليتم فحصها من قبل المطورين.</p>
+        
+        <form class="contact_form" id="devForm">
+            <input type="text" id="dev_name" placeholder="الاسم" required>
+            <input type="number" id="dev_phone" placeholder="رقم الهاتف" required>
+            <textarea id="dev_msg" rows="3" placeholder="وصف العطل الفني بالتفصيل..." required></textarea>
+            <button type="submit" class="submit_btn" style="background: #e11d48; color: white;">إرسال للمطور</button>
+        </form>
+    </div>
+
+</div>
+
+<div id="custom_toast">
+    <span class="toast_icon">✨</span>
+    <span id="toast_text">تم الإرسال بنجاح</span>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    function showToast(message) {
+        const toast = document.getElementById('custom_toast');
+        const text = document.getElementById('toast_text');
+        text.innerText = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    function sendData(path, data, formId, successMsg) {
+        const dbRef = ref(db, path);
+        const newEntryRef = push(dbRef);
+        set(newEntryRef, {
+            ...data,
+            timestamp: Date.now(),
+            date: new Date().toLocaleString('ar-EG')
+        }).then(() => {
+            showToast(successMsg);
+            document.getElementById(formId).reset();
+        }).catch((error) => {
+            showToast("عذراً، حدث خطأ ما ❌");
+        });
+    }
+
+    document.getElementById('inquiryForm').onsubmit = (e) => {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('inq_name').value,
+            phone: document.getElementById('inq_phone').value,
+            message: document.getElementById('inq_msg').value,
+            type: "General Inquiry"
+        };
+        sendData('user_inquiries', data, 'inquiryForm', 'تم إرسال استفسارك بنجاح ✅');
+    };
+
+    document.getElementById('devForm').onsubmit = (e) => {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('dev_name').value,
+            phone: document.getElementById('dev_phone').value,
+            message: document.getElementById('dev_msg').value,
+            type: "Technical Bug"
+        };
+        sendData('developer_reports', data, 'devForm', 'تم إرسال الشكوى بنجاح للمطور 🛠️');
+    };
+</script>
+
+</body>
+</html>

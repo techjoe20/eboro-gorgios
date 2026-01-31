@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات الحساب | مدرسة الكنيسة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/all.min.css">
+    <style>
+        :root { --bg-color: #f4f7f6; --card-bg: #ffffff; --text-color: #333; --primary-color: #D4AF37; --input-border: #ddd; --readonly-bg: #f9f9f9; }
+        body.dark-mode { --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0; --primary-color: #D4AF37; --input-border: #444; --readonly-bg: #252525; }
+        
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); transition: 0.3s; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding-bottom: 50px; }
+        
+        .profile-header { text-align: center; margin-bottom: 20px; }
+        .profile-header img { width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--primary-color); object-fit: cover; background: #eee; cursor: pointer; }
+        
+        .settings-card { background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .section-title { display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--primary-color); margin-bottom: 20px; border-bottom: 1px solid var(--input-border); padding-bottom: 10px; }
+        
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+        input { width: 100%; padding: 12px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--card-bg); color: var(--text-color); box-sizing: border-box; outline: none; font-size: 15px; }
+        input[readonly] { background-color: var(--readonly-bg); cursor: not-allowed; border-style: solid; opacity: 0.8; }
+        
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; }
+        .switch { position: relative; display: inline-block; width: 45px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(21px); }
+        
+        .btn-save { width: 100%; padding: 15px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="profile-header">
+        <img id="userAvatar" src="https://via.placeholder.com/110" alt="Profile" onclick="window.open(this.src)">
+        <h2 id="displayUserName">جاري التحميل...</h2>
+        <p id="displayUserCode" style="font-size: 0.9em; opacity: 0.7; color: var(--primary-color); font-weight: bold;"></p>
+    </div>
+
+    <div class="settings-card">
+        <div class="section-title"><i class="fas fa-moon"></i> المظهر</div>
+        <div class="toggle-row">
+            <span>تفعيل الوضع الليلي</span>
+            <label class="switch">
+                <input type="checkbox" id="darkModeToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="settings-card">
+        <div class="section-title"><i class="fas fa-user-graduate"></i> بيانات الطالب</div>
+        
+        <div class="input-group"><label>الاسم بالكامل</label><input type="text" id="USR01" readonly></div>
+        <div class="input-group"><label>رقم الموبايل</label><input type="text" id="TEL01" readonly></div>
+        <div class="input-group"><label>رقم ولي الأمر</label><input type="text" id="TEL02" readonly></div>
+        <div class="input-group"><label>أب الاعتراف</label><input type="text" id="FR01" readonly></div>
+        <div class="input-group"><label>المستوى</label><input type="text" id="LVL01" readonly></div>
+        <div class="input-group"><label>العنوان</label><input type="text" id="ADR01" readonly></div>
+        <div class="input-group"><label>تاريخ الميلاد</label><input type="text" id="DOB" readonly></div>
+        <div class="input-group"><label>المرحلة الدراسية</label><input type="text" id="STG01" readonly></div>
+
+        <button class="btn-save" onclick="requestEdit()">طلب تعديل بيانات</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    // تأكد من أن Firebase لا يعمل Initialization مرتين
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+
+    // إدارة الوضع الليلي
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.classList.toggle('dark-mode', savedTheme === 'dark');
+        darkModeToggle.checked = (savedTheme === 'dark');
+    }
+
+    darkModeToggle.addEventListener('change', () => {
+        const theme = darkModeToggle.checked ? 'dark' : 'light';
+        document.body.classList.toggle('dark-mode', darkModeToggle.checked);
+        localStorage.setItem('theme', theme);
+    });
+
+    // جلب البيانات مع فحص "كل" احتمالات مفاتيح الحفظ
+    async function loadStudentData() {
+        // جرب كل المفاتيح الممكنة اللي ممكن تكون استخدمتها في صفحة البروفايل
+        const code = localStorage.getItem('userCode') || 
+                     localStorage.getItem('studentCode') || 
+                     localStorage.getItem('user_id') ||
+                     localStorage.getItem('code');
+
+        if (!code) {
+            document.getElementById('displayUserName').innerText = "غير مسجل";
+            console.warn("No code found in LocalStorage");
+            return;
+        }
+
+        const cleanCode = code.trim(); // تنظيف المسافات
+        document.getElementById('displayUserCode').innerText = "كود الطالب: " + cleanCode;
+
+        try {
+            const studentRef = database.ref('students/' + cleanCode);
+            studentRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    if (data.IMG_URL) document.getElementById('userAvatar').src = data.IMG_URL;
+                    document.getElementById('displayUserName').innerText = data.USR01 || "طالب";
+                    document.getElementById('USR01').value = data.USR01 || 'غير مسجل';
+                    document.getElementById('TEL01').value = data.TEL01 || 'غير مسجل';
+                    document.getElementById('TEL02').value = data.TEL02 || 'غير مسجل';
+                    document.getElementById('FR01').value = data.FR01 || 'غير مسجل';
+                    document.getElementById('LVL01').value = data.LVL01 || 'غير مسجل';
+                    document.getElementById('ADR01').value = data.ADR01 || 'غير مسجل';
+                    document.getElementById('DOB').value   = data.DOB   || 'غير مسجل';
+                    document.getElementById('STG01').value = data.STG01 || 'غير مسجل';
+                } else {
+                    document.getElementById('displayUserName').innerText = "بيانات مفقودة";
+                }
+            });
+        } catch (error) {
+            console.error("Firebase Connection Error:", error);
+        }
+    }
+
+    window.onload = () => {
+        applySavedTheme();
+        loadStudentData();
+    };
+
+    function requestEdit() { 
+        Swal.fire({
+            title: 'تعديل البيانات',
+            text: 'لتعديل بياناتك، يرجى مراجعة إدارة المدرسة أو السكرتارية مباشرة.',
+            icon: 'info',
+            confirmButtonText: 'فهمت'
+        }); 
+    }
+</script>
+</body>
+</html>

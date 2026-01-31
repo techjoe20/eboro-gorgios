@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قريباً | مدرسة الكنيسة</title>
+    <style>
+        /* تعريف متغيرات الألوان للوضع العادي والليلي */
+        :root {
+            --primary-bg: #1e293b; /* الخلفية الداكنة الأصلية */
+            --accent-gold: #d4af37;
+            --text-white: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        /* إذا أراد المستخدم وضعاً فاتحاً (اختياري حسب اختيارك في الإعدادات) */
+        /* ملاحظة: بما أن الصفحة تصميمها داكن أصلاً، سنبقيها كما هي إلا لو أردت عكسها */
+        body.light-mode {
+            --primary-bg: #F4F1EA;
+            --text-white: #5D4037;
+            --glass-bg: rgba(93, 64, 55, 0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--primary-bg);
+            display: flex; justify-content: center; align-items: center;
+            color: var(--text-white); overflow: hidden;
+            transition: background-color 0.3s, color 0.3s; /* انتقال ناعم */
+        }
+
+        .container {
+            text-align: center; z-index: 2; padding: 20px;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        .church_icon {
+            font-size: 80px; margin-bottom: 20px; 
+            display: block; animation: pulse 3s infinite;
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 15px; color: var(--accent-gold); }
+        p { font-size: 1.1rem; opacity: 0.8; line-height: 1.6; max-width: 400px; margin: 0 auto 30px; }
+
+        .btn_back {
+            padding: 10px 30px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.3);
+            background: var(--glass-bg); color: var(--text-white); text-decoration: none;
+            transition: 0.3s; cursor: pointer; display: inline-block;
+        }
+        .btn_back:hover { background: var(--text-white); color: var(--primary-bg); }
+
+        /* حركات بسيطة */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* دوائر خفيفة جداً في الخلفية */
+        .bg_dots {
+            position: absolute; width: 100%; height: 100%;
+            background-image: radial-gradient(var(--glass-bg) 1px, transparent 1px);
+            background-size: 30px 30px; z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg_dots"></div>
+
+    <div class="container">
+        <span class="church_icon">⛪</span>
+        <h1>قريباً...</h1>
+        <p>نعمل حالياً على تجهيز هذا القسم لخدمتكم بشكل أفضل. انتظرونا قريباً جداً!</p>
+        
+        <a href="javascript:history.back()" class="btn_back">العودة للخلف</a>
+    </div>
+
+    <script>
+        // كود تطبيق الوضع المختار من الإعدادات
+        function applySavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.remove('light-mode'); // الوضع الداكن هو الافتراضي هنا
+            } else if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+            }
+        }
+
+        // تنفيذ الوظيفة عند تحميل الصفحة
+        window.onload = applySavedTheme;
+    </script>
+</body>
+</html>
