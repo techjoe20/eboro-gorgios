@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل الرسائل والتعليمات</title>
+    <style>
+        :root {
+            --bg01: #f8fafc;
+            --primary01: #1e293b;
+            --accent01: #d4af37;
+            --text01: #334155;
+            --unread-bg: #eff6ff;
+            --unread-border: #3b82f6;
+            --box-bg: #ffffff;
+            --item-border: #f1f5f9;
+        }
+
+        /* تم تعديل الألوان هنا لتصبح سوداء غامقة بدلاً من الكحلي */
+        body.dark_mode_active {
+            --bg01: #000000; /* أسود خالص للخلفية */
+            --primary01: #f1f5f9;
+            --accent01: #d4af37;
+            --text01: #cbd5e1;
+            --unread-bg: #121212; /* رمادي غامق جداً للرسائل غير المقروءة */
+            --unread-border: #3b82f6;
+            --box-bg: #0a0a0a; /* أسود مخفف للصناديق */
+            --item-border: #1e1e1e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg01);
+            color: var(--text01);
+            margin: 0; padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .main_box {
+            max-width: 600px;
+            margin: 40px auto;
+            background: var(--box-bg);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 25px;
+        }
+
+        .header_box {
+            border-bottom: 2px solid var(--bg01);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header_box h2 { margin: 0; font-size: 1.4rem; color: var(--primary01); }
+
+        .msg_list { min-height: 200px; }
+
+        .msg_item {
+            background: var(--box-bg);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--item-border);
+            border-right: 5px solid #e2e8f0;
+            position: relative;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .msg_item.unread {
+            background: var(--unread-bg);
+            border-right-color: var(--unread-border);
+        }
+
+        .unread_badge {
+            display: none;
+            background: var(--unread-border);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            float: left;
+        }
+
+        .msg_item.unread .unread_badge { display: inline-block; }
+
+        .msg_date { font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 8px; }
+        .msg_content { line-height: 1.6; white-space: pre-wrap; margin-bottom: 10px; }
+
+        .btn_dombo {
+            background: var(--accent01);
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .empty_state { text-align: center; padding: 50px 20px; }
+        .empty_icon { font-size: 50px; display: block; margin-bottom: 15px; opacity: 0.5; }
+
+        .btn_refresh {
+            display: block; width: 100%; padding: 12px;
+            background: var(--primary01); color: var(--bg01);
+            border: none; border-radius: 8px; cursor: pointer;
+            margin-top: 20px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<script>
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark_mode_active');
+    }
+</script>
+
+<div class="main_box">
+    <div class="header_box">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span>📩</span>
+            <h2>سجل التعليمات</h2>
+        </div>
+    </div>
+
+    <div class="msg_list" id="msgList01">
+        <div class="empty_state">جارِ تحميل الرسائل...</div>
+    </div>
+
+    <button class="btn_refresh" onclick="location.reload()">تحديث السجل</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    function getReadMessages() {
+        return JSON.parse(localStorage.getItem('read_announcements') || '[]');
+    }
+
+    window.markAsRead = (id) => {
+        let readMsgs = getReadMessages();
+        if (!readMsgs.includes(id)) {
+            readMsgs.push(id);
+            localStorage.setItem('read_announcements', JSON.stringify(readMsgs));
+            renderMessages(); 
+        }
+    };
+
+    let cachedData = null;
+
+    async function renderMessages() {
+        if (!cachedData) return;
+        
+        const msgListContainer = document.getElementById('msgList01');
+        const readMsgs = getReadMessages();
+        let html = "";
+
+        const msgsArray = Object.keys(cachedData).map(key => ({
+            id: key,
+            ...cachedData[key]
+        })).sort((a, b) => b.timestamp - a.timestamp);
+
+        if (msgsArray.length === 0) {
+            msgListContainer.innerHTML = `<div class="empty_state"><span class="empty_icon">📋</span><h3>لا توجد رسائل</h3></div>`;
+            return;
+        }
+
+        msgsArray.forEach(msg => {
+            const isUnread = !readMsgs.includes(msg.id);
+            html += `
+                <div class="msg_item ${isUnread ? 'unread' : ''}" onclick="markAsRead('${msg.id}')">
+                    <span class="unread_badge">جديد</span>
+                    <span class="msg_date">${msg.date}</span>
+                    <div class="msg_content">${msg.content}</div>
+                    <button class="btn_dombo">اضغط لتاكيد القرائة</button>
+                </div>
+            `;
+        });
+
+        msgListContainer.innerHTML = html;
+    }
+
+    const announcementsRef = ref(db, 'announcements');
+    onValue(announcementsRef, (snapshot) => {
+        if (snapshot.exists()) {
+            cachedData = snapshot.val();
+            renderMessages();
+        } else {
+            document.getElementById('msgList01').innerHTML = `<div class="empty_state"><h3>لا توجد رسائل</h3></div>`;
+        }
+    });
+</script>
+
+</body>
+</html>

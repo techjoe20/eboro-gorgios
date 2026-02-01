@@ -84,6 +84,7 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
+            position: relative;
         }
 
         /* المنيو الجانبية */
@@ -120,7 +121,7 @@
         .student_profile_card {
             text-align: center;
             padding-bottom: 15px;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.3);
         }
 
         .student_img {
@@ -132,7 +133,6 @@
             background-color: #EEE;
         }
 
-        /* روابط القائمة المحدثة */
         .menu_links { margin-top: 15px; list-style: none; padding: 0; }
         .menu_links a {
             display: block;
@@ -147,7 +147,7 @@
         }
         .menu_links a:hover { background: #D4AF3722; color: #D4AF37; }
 
-        .logout_link { color: #e74c3c !important; margin-top: 15px; border-top: 1px solid #444; padding-top: 15px !important; }
+        .logout_link { color: #e74c3c !important; margin-top: 15px; border-top: 1px solid rgba(128, 128, 128, 0.3); padding-top: 15px !important; }
 
         .overlay {
             position: fixed;
@@ -164,7 +164,6 @@
 
         main { padding: 20px 15px; animation: fadeIn 0.8s ease; }
 
-        /* تنسيق عناصر الوصف الجديدة */
         .welcome_box {
             background: var(--bg-card);
             padding: 20px;
@@ -195,6 +194,33 @@
         .info_card span { font-size: 24px; }
         .info_card strong { display: block; color: var(--text-main); font-size: 15px; }
         .info_card small { color: var(--text-sub); font-size: 12px; }
+
+        /* ستايل الإشعارات المطور لضمان التمركز */
+        .notification-badge {
+            background-color: #ff3b30;
+            color: white;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            font-size: 10px;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            border: 2px solid #5D4037;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .menu-link-badge {
+            background-color: #ff3b30;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -211,13 +237,18 @@
         </div>
 
         <ul class="menu_links">
-            <li><a href="lessons.html" onclick="navigateWithCode('lessons.html')">📚 دروسي ومناهجي</a></li>
-            <li><a href="materials.html" onclick="navigateWithCode('materials.html')">📑 الملازم والكتب</a></li>
-            <li><a href="exams.html" onclick="navigateWithCode('exams.html')">✍️ الامتحانات</a></li>
-            <li><a href="results.html" onclick="navigateWithCode('results.html')">🏆 النتائج والتقييمات</a></li>
-            <li><a href="comments.html" onclick="navigateWithCode('messages.html')">💬 الرسائل والتنبيهات</a></li>
-            <li><a href="edit_profile.html" onclick="navigateWithCode('edit_profile.html')">⚙️ تعديل البيانات</a></li>
-            <li><a href="contact.html" onclick="navigateWithCode('contact.html')">📞 تواصل معنا</a></li>
+            <li><a href="#" onclick="navigateWithCode('lessons.html')">📚 دروسي ومناهجي</a></li>
+            <li><a href="#" onclick="navigateWithCode('materials.html')">📑 الملازم والكتب</a></li>
+            <li><a href="#" onclick="navigateWithCode('exams.html')">✍️ الامتحانات</a></li>
+            <li><a href="#" onclick="navigateWithCode('results.html')">🏆 النتائج والتقييمات</a></li>
+            <li>
+                <a href="#" onclick="navigateWithCode('messages.html')" style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>💬 الرسائل والتنبيهات</span>
+                    <span id="msg_badge_menu" class="menu-link-badge">0</span>
+                </a>
+            </li>
+            <li><a href="#" onclick="navigateWithCode('edit_profile.html')">⚙️ تعديل البيانات</a></li>
+            <li><a href="#" onclick="navigateWithCode('contact.html')">📞 تواصل معنا</a></li>
             <li><a href="index.html" class="logout_link">🚪 تسجيل الخروج</a></li>
         </ul>
     </div>
@@ -227,7 +258,10 @@
             <span class="student_name_top">أهلاً، <span id="top_name">...</span></span>
             <span class="student_code_top" id="top_code">...</span>
         </div>
-        <button class="menu_btn" onclick="toggleMenu()">☰ القائمة</button>
+        <button class="menu_btn" onclick="toggleMenu()">
+            ☰ القائمة
+            <span id="main_btn_badge" class="notification-badge">0</span>
+        </button>
     </header>
 
     <main>
@@ -285,7 +319,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
@@ -300,6 +334,37 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // وظيفة مراقبة الرسائل
+        function listenForMessages() {
+            // الاستماع لمجلد announcements مباشرة للجميع
+            const messagesRef = ref(db, 'announcements');
+            onValue(messagesRef, (snapshot) => {
+                const mainBadge = document.getElementById('main_btn_badge');
+                const menuBadge = document.getElementById('msg_badge_menu');
+                
+                if (snapshot.exists()) {
+                    const messages = snapshot.val();
+                    const count = Object.keys(messages).length;
+                    
+                    if (count > 0) {
+                        mainBadge.innerText = count > 99 ? "+99" : count;
+                        mainBadge.style.display = 'flex';
+
+                        menuBadge.innerText = count;
+                        menuBadge.style.display = 'inline-block';
+                    } else {
+                        mainBadge.style.display = 'none';
+                        menuBadge.style.display = 'none';
+                    }
+                } else {
+                    mainBadge.style.display = 'none';
+                    menuBadge.style.display = 'none';
+                }
+            }, (error) => {
+                console.error("Firebase Error:", error);
+            });
+        }
+
         async function loadStudentData() {
             const urlParams = new URLSearchParams(window.location.search);
             const studentCode = urlParams.get('code');
@@ -309,8 +374,9 @@
                 return;
             }
 
-            // --- الإضافة هنا: حفظ الكود في الـ Local Storage ---
             localStorage.setItem('studentCode', studentCode);
+            // استدعاء الوظيفة بدون تمرير كود الطالب لمراقبة المجلد العام
+            listenForMessages();
 
             try {
                 const studentRef = ref(db, 'students/' + studentCode);
