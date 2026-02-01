@@ -242,7 +242,7 @@
             <li><a href="#" onclick="navigateWithCode('exams.html')">✍️ الامتحانات</a></li>
             <li><a href="#" onclick="navigateWithCode('results.html')">🏆 النتائج والتقييمات</a></li>
             <li>
-                <a href="#" onclick="navigateWithCode('messages.html')" style="display: flex; align-items: center; justify-content: space-between;">
+                <a href="#" onclick="goToMessages()" style="display: flex; align-items: center; justify-content: space-between;">
                     <span>💬 الرسائل والتنبيهات</span>
                     <span id="msg_badge_menu" class="menu-link-badge">0</span>
                 </a>
@@ -336,7 +336,6 @@
 
         // وظيفة مراقبة الرسائل
         function listenForMessages() {
-            // الاستماع لمجلد announcements مباشرة للجميع
             const messagesRef = ref(db, 'announcements');
             onValue(messagesRef, (snapshot) => {
                 const mainBadge = document.getElementById('main_btn_badge');
@@ -344,18 +343,25 @@
                 
                 if (snapshot.exists()) {
                     const messages = snapshot.val();
-                    const count = Object.keys(messages).length;
+                    const totalCount = Object.keys(messages).length;
                     
-                    if (count > 0) {
-                        mainBadge.innerText = count > 99 ? "+99" : count;
+                    // قراءة عدد الرسائل المقروءة من قبل
+                    const lastViewedCount = parseInt(localStorage.getItem('lastViewedMsgCount') || '0');
+                    const newCount = totalCount - lastViewedCount;
+
+                    if (newCount > 0) {
+                        mainBadge.innerText = newCount > 99 ? "+99" : newCount;
                         mainBadge.style.display = 'flex';
 
-                        menuBadge.innerText = count;
+                        menuBadge.innerText = newCount;
                         menuBadge.style.display = 'inline-block';
                     } else {
                         mainBadge.style.display = 'none';
                         menuBadge.style.display = 'none';
                     }
+                    
+                    // حفظ الإجمالي الحالي لاستخدامه عند الضغط
+                    window.currentTotalMessages = totalCount;
                 } else {
                     mainBadge.style.display = 'none';
                     menuBadge.style.display = 'none';
@@ -375,7 +381,6 @@
             }
 
             localStorage.setItem('studentCode', studentCode);
-            // استدعاء الوظيفة بدون تمرير كود الطالب لمراقبة المجلد العام
             listenForMessages();
 
             try {
@@ -418,6 +423,14 @@
             } else {
                 window.location.href = pageName;
             }
+        }
+
+        // الوظيفة الجديدة لتصفير الإشعارات عند الضغط
+        window.goToMessages = function() {
+            if (window.currentTotalMessages !== undefined) {
+                localStorage.setItem('lastViewedMsgCount', window.currentTotalMessages);
+            }
+            window.navigateWithCode('messages.html');
         }
 
         window.toggleMenu = function() {
