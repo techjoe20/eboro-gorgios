@@ -3,97 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قريباً | مدرسة الكنيسة</title>
+    <title>لوحة إنجازات الطالب</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* تعريف متغيرات الألوان للوضع العادي والليلي */
+        /* متغيرات الألوان للوضع العادي والليلي */
         :root {
-            --primary-bg: #1e293b; /* الخلفية الداكنة الأصلية */
-            --accent-gold: #d4af37;
-            --text-white: #ffffff;
-            --glass-bg: rgba(255, 255, 255, 0.05);
+            --bg-body: #F4F1EA;
+            --bg-card: #FFFFFF;
+            --text-main: #5D4037;
+            --text-sub: #8D6E63;
+            --accent: #D4AF37;
+            --card-border: #E0E0E0;
+            --stat-bg: #FFFDF5;
         }
 
-        /* إذا أراد المستخدم وضعاً فاتحاً (اختياري حسب اختيارك في الإعدادات) */
-        /* ملاحظة: بما أن الصفحة تصميمها داكن أصلاً، سنبقيها كما هي إلا لو أردت عكسها */
-        body.light-mode {
-            --primary-bg: #F4F1EA;
-            --text-white: #5D4037;
-            --glass-bg: rgba(93, 64, 55, 0.1);
+        body.dark-mode {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-sub: #b0b0b0;
+            --accent: #D4AF37;
+            --card-border: #333333;
+            --stat-bg: #252525;
         }
 
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--primary-bg);
-            display: flex; justify-content: center; align-items: center;
-            color: var(--text-white); overflow: hidden;
-            transition: background-color 0.3s, color 0.3s; /* انتقال ناعم */
-        }
-
-        .container {
-            text-align: center; z-index: 2; padding: 20px;
-            animation: fadeIn 1.5s ease-in-out;
-        }
-
-        .church_icon {
-            font-size: 80px; margin-bottom: 20px; 
-            display: block; animation: pulse 3s infinite;
-        }
-
-        h1 { font-size: 2.5rem; margin-bottom: 15px; color: var(--accent-gold); }
-        p { font-size: 1.1rem; opacity: 0.8; line-height: 1.6; max-width: 400px; margin: 0 auto 30px; }
-
-        .btn_back {
-            padding: 10px 30px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.3);
-            background: var(--glass-bg); color: var(--text-white); text-decoration: none;
-            transition: 0.3s; cursor: pointer; display: inline-block;
-        }
-        .btn_back:hover { background: var(--text-white); color: var(--primary-bg); }
-
-        /* حركات بسيطة */
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* دوائر خفيفة جداً في الخلفية */
-        .bg_dots {
-            position: absolute; width: 100%; height: 100%;
-            background-image: radial-gradient(var(--glass-bg) 1px, transparent 1px);
-            background-size: 30px 30px; z-index: 1;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-body); margin: 0; padding: 20px; color: var(--text-main); transition: background 0.3s, color 0.3s; }
+        .dashboard_container { max-width: 500px; margin: auto; background: var(--bg-card); padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); border-top: 10px solid var(--accent); margin-bottom: 20px; }
+        .header { text-align: center; border-bottom: 2px solid var(--bg-body); padding-bottom: 15px; margin-bottom: 20px; }
+        .header h2 { margin: 0; color: var(--text-main); }
+        .header p { color: var(--accent); font-weight: bold; margin: 5px 0 0; }
+        .stats_grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .stat_card { background: var(--stat-bg); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--card-border); transition: 0.3s; }
+        .stat_card.full { grid-column: span 2; background: var(--stat-bg); }
+        .stat_card h3 { margin: 0; font-size: 14px; color: var(--text-sub); }
+        .stat_card p { margin: 8px 0 0; font-size: 28px; font-weight: bold; color: var(--accent); }
+        .chart_container { width: 100%; max-width: 280px; margin: auto; position: relative; }
+        #loading { text-align: center; padding: 100px 20px; font-size: 18px; color: var(--text-sub); }
+        .section_title { text-align: center; color: var(--text-sub); font-size: 18px; margin: 20px 0 10px; border-top: 1px dashed var(--accent); padding-top: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="bg_dots"></div>
+<div id="loading">جاري الربط بين بيانات الطالب والمحاضرات...</div>
 
-    <div class="container">
-        <span class="church_icon">⛪</span>
-        <h1>قريباً...</h1>
-        <p>نعمل حالياً على تجهيز هذا القسم لخدمتكم بشكل أفضل. انتظرونا قريباً جداً!</p>
-        
-        <a href="javascript:history.back()" class="btn_back">العودة للخلف</a>
+<div class="dashboard_container" id="mainDashboard" style="display: none;">
+    <div class="header">
+        <h2 id="studentName">أهلاً بك</h2>
+        <p id="studentLevelDisplay"></p>
     </div>
 
-    <script>
-        // كود تطبيق الوضع المختار من الإعدادات
-        function applySavedTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.classList.remove('light-mode'); // الوضع الداكن هو الافتراضي هنا
-            } else if (savedTheme === 'light') {
-                document.body.classList.add('light-mode');
+    <div class="stats_grid">
+        <div class="stat_card full">
+            <h3>إجمالي محاضرات مستواك</h3>
+            <p id="totalLectures">0</p>
+        </div>
+        <div class="stat_card">
+            <h3>حضرته</h3>
+            <p id="attendedLectures" style="color: #2E7D32;">0</p>
+        </div>
+        <div class="stat_card">
+            <h3>غبت عنه</h3>
+            <p id="missedLectures" style="color: #C62828;">0</p>
+        </div>
+    </div>
+
+    <div class="chart_container">
+        <canvas id="progressChart"></canvas>
+    </div>
+
+    <div class="section_title">إنجاز حل الأسئلة</div>
+    <div class="stats_grid">
+        <div class="stat_card">
+            <h3>إجابات صحيحة</h3>
+            <p id="correctAnswers" style="color: #2E7D32;">0</p>
+        </div>
+        <div class="stat_card">
+            <h3>إجابات خاطئة</h3>
+            <p id="wrongAnswers" style="color: #C62828;">0</p>
+        </div>
+    </div>
+    <div class="chart_container">
+        <canvas id="quizChart"></canvas>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // وظيفة تطبيق الدارك مود
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    }
+
+    function cleanText(t) {
+        if (!t) return "";
+        return String(t).trim().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, "");
+    }
+
+    async function init() {
+        applySavedTheme(); // استدعاء الدارك مود عند التشغيل
+        const code = localStorage.getItem('studentCode') || new URLSearchParams(window.location.search).get('code');
+        if (!code) { window.location.href = "login.html"; return; }
+
+        try {
+            const sSnap = await get(ref(db, 'students/' + code));
+            if (!sSnap.exists()) return;
+
+            const student = sSnap.val();
+            const sLvlClean = cleanText(student.LVL01);
+            const sStgClean = cleanText(student.STG01);
+            
+            document.getElementById('studentName').innerText = "أهلاً " + (student.USR01 || "");
+            document.getElementById('studentLevelDisplay').innerText = "مستواك الحالي: " + (student.LVL01 || "");
+
+            const logsSnap = await get(ref(db, 'attendance_logs'));
+            const attendedLecturesTitles = new Set();
+            
+            let totalCorrect = 0;
+            let totalQuestionsAcrossAll = 0;
+
+            if (logsSnap.exists()) {
+                Object.values(logsSnap.val()).forEach(log => {
+                    if (String(log.student_code).trim() === String(code).trim()) {
+                        const percent = parseFloat(log.watch_percentage) || 0;
+                        if (percent >= 80) {
+                            attendedLecturesTitles.add(log.lecture);
+                        }
+
+                        if(log.correct_questions !== undefined && log.total_questions !== undefined) {
+                            totalCorrect += parseInt(log.correct_questions) || 0;
+                            totalQuestionsAcrossAll += parseInt(log.total_questions) || 0;
+                        }
+                    }
+                });
             }
+
+            const lSnap = await get(ref(db, 'lectures'));
+            let totalLec = 0, attendedCount = 0;
+
+            if (lSnap.exists()) {
+                Object.values(lSnap.val()).forEach(lec => {
+                    const lLvlClean = cleanText(lec.level || "");
+                    const lStgClean = cleanText(lec.stage || "");
+                    const isLevelMatch = (lLvlClean.includes(sLvlClean) || sLvlClean.includes(lLvlClean)) && sLvlClean !== "";
+                    const isStageMatch = (lStgClean.includes(sStgClean) || sStgClean.includes(lStgClean)) && sStgClean !== "";
+
+                    if (isLevelMatch && isStageMatch) {
+                        totalLec++;
+                        if (attendedLecturesTitles.has(lec.title)) {
+                            attendedCount++;
+                        }
+                    }
+                });
+            }
+
+            renderDashboard(totalLec, attendedCount, totalCorrect, totalQuestionsAcrossAll);
+        } catch (e) { console.error(e); }
+    }
+
+    function renderDashboard(t, a, correct, totalQ) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('mainDashboard').style.display = 'block';
+        
+        document.getElementById('totalLectures').innerText = t;
+        document.getElementById('attendedLectures').innerText = a;
+        document.getElementById('missedLectures').innerText = Math.max(0, t - a);
+
+        const wrong = Math.max(0, totalQ - correct);
+        document.getElementById('correctAnswers').innerText = correct;
+        document.getElementById('wrongAnswers').innerText = wrong;
+
+        const isDark = document.body.classList.contains('dark-mode');
+        const emptyColor = isDark ? '#333333' : '#E0E0E0';
+
+        if (t > 0) {
+            new Chart(document.getElementById('progressChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['حضور', 'غياب'],
+                    datasets: [{ data: [a, t - a], backgroundColor: ['#D4AF37', emptyColor], borderWidth: 0 }]
+                },
+                options: { cutout: '75%', plugins: { legend: { position: 'bottom', labels: { color: isDark ? '#e0e0e0' : '#5D4037' } } } }
+            });
         }
 
-        // تنفيذ الوظيفة عند تحميل الصفحة
-        window.onload = applySavedTheme;
-    </script>
+        if (totalQ > 0) {
+            new Chart(document.getElementById('quizChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['صح', 'خطأ'],
+                    datasets: [{ data: [correct, wrong], backgroundColor: ['#2E7D32', '#C62828'], borderWidth: 0 }]
+                },
+                options: { cutout: '75%', plugins: { legend: { position: 'bottom', labels: { color: isDark ? '#e0e0e0' : '#5D4037' } } } }
+            });
+        }
+    }
+    init();
+</script>
 </body>
 </html>

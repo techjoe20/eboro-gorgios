@@ -20,7 +20,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 15px; /* مسافة أمان للموبايل */
+            padding: 15px;
             box-sizing: border-box;
         }
 
@@ -30,7 +30,7 @@
             border-radius: 25px;
             box-shadow: 0 20px 40px rgba(93, 64, 55, 0.15);
             width: 100%;
-            max-width: 400px; /* العرض المثالي للموبايل والتابلت */
+            max-width: 400px;
             border-top: 10px solid #D4AF37;
             animation: fadeInPage 0.8s ease-out;
             text-align: center;
@@ -39,7 +39,7 @@
 
         .login_header h2 {
             color: #5D4037;
-            font-size: clamp(20px, 5vw, 24px); /* حجم خط مرن */
+            font-size: clamp(20px, 5vw, 24px);
             margin-bottom: 10px;
         }
 
@@ -64,12 +64,12 @@
         
         input[type="text"] {
             width: 100%;
-            padding: 14px; /* زيادة مساحة اللمس للموبايل */
+            padding: 14px;
             border: 2px solid #E0E0E0;
             border-radius: 12px;
             box-sizing: border-box;
             text-align: center;
-            font-size: 16px; /* منع الـ Zoom التلقائي في الآيفون */
+            font-size: 16px;
             background-color: #FAFAFA;
             transition: border-color 0.3s ease;
         }
@@ -92,11 +92,11 @@
             cursor: pointer;
             margin-top: 10px;
             transition: transform 0.2s, opacity 0.3s;
-            -webkit-tap-highlight-color: transparent; /* إلغاء الوميض عند اللمس في الموبايل */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .login_btn:active {
-            transform: scale(0.98); /* تأثير ضغطة الزر */
+            transform: scale(0.98);
         }
 
         .login_btn:disabled { 
@@ -105,7 +105,25 @@
             transform: none;
         }
 
-        /* تحسينات للشاشات الصغيرة جداً */
+        .pay_link_container {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #E0E0E0;
+        }
+
+        .pay_link {
+            color: #D4AF37;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .pay_link:hover {
+            color: #5D4037;
+            text-decoration: underline;
+        }
+
         @media (max-width: 360px) {
             .login_container {
                 padding: 20px 15px;
@@ -136,6 +154,10 @@
             </div>
 
             <button type="submit" id="submitBtn" class="login_btn">تحقق ودخول</button>
+            
+            <div class="pay_link_container">
+                <a href="pay.html" class="pay_link">تم إنشاء حسابي ولكن لم أسدد المصروفات؟ اضغط هنا</a>
+            </div>
         </form>
     </div>
 
@@ -159,23 +181,29 @@
         const loginForm = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
 
+        // دالة لتنظيف النص من المسافات الزائدة
+        const cleanText = (str) => str ? str.trim().replace(/\s+/g, ' ') : "";
+
         loginForm.onsubmit = async (e) => {
             e.preventDefault();
             
-            const nameInput = document.getElementById('USR_NAME').value.trim();
-            const codeInput = document.getElementById('STU_CODE').value.trim();
+            const nameInput = cleanText(document.getElementById('USR_NAME').value);
+            const codeInput = cleanText(document.getElementById('STU_CODE').value);
 
             submitBtn.disabled = true;
             submitBtn.innerText = "جاري التحقق...";
 
             try {
-                const studentRef = ref(db, 'students/' + codeInput);
+                const studentRef = ref(db, 'paid_history/' + codeInput);
                 const snapshot = await get(studentRef);
 
                 if (snapshot.exists()) {
                     const studentData = snapshot.val();
                     
-                    if (studentData.USR01 === nameInput) {
+                    const dbName = cleanText(studentData.student_name);
+                    const dbCode = cleanText(studentData.student_code);
+
+                    if (dbName === nameInput && dbCode === codeInput) {
                         Swal.fire({
                             icon: 'success',
                             title: 'تم التحقق بنجاح',
@@ -186,10 +214,10 @@
                             window.location.href = `student_profile.html?code=${codeInput}`;
                         });
                     } else {
-                        throw new Error("الاسم غير مطابق للكود المدخل");
+                        throw new Error("الاسم غير مطابق للكود المسجل في سجلات الدفع");
                     }
                 } else {
-                    throw new Error("هذا الكود غير مسجل لدينا");
+                    throw new Error("هذا الكود غير موجود أو لم يتم تفعيله بعد");
                 }
 
             } catch (error) {

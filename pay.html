@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تأكيد الدفع | مدرسة ابؤورو</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #5D4037;
+            --accent: #D4AF37;
+            --bg: #F9F7F2;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .payment_container {
+            background: white;
+            width: 90%;
+            max-width: 450px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header_icon {
+            font-size: 50px;
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+
+        h2 { color: var(--primary); margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; line-height: 1.6; }
+
+        .method_selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .method_btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .method_btn.active {
+            border-color: var(--accent);
+            background-color: #fff9e6;
+            color: var(--primary);
+        }
+
+        .instruction_box {
+            background: #fff9e6;
+            padding: 15px;
+            border-radius: 10px;
+            border-right: 5px solid var(--accent);
+            margin: 20px 0;
+            text-align: right;
+        }
+
+        .form_group {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .file_input_label {
+            display: block;
+            background: #eee;
+            padding: 15px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn_submit {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .loading_overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100;
+        }
+
+        #orange_section, #cash_section { display: none; }
+        #orange_section.active, #cash_section.active { display: block; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #preview_img { max-width: 100%; height: auto; margin-top: 10px; border-radius: 8px; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="loading" class="loading_overlay">
+    <div style="width: 50px; height: 50px; border: 5px solid #ddd; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <p id="loading_text">جاري التحقق وتفعيل الحساب...</p>
+</div>
+
+<div class="payment_container">
+    <div class="header_icon">💳</div>
+    <h2>تأكيد عملية الدفع</h2>
+    <p>اختر وسيلة الدفع التي استخدمتها:</p>
+
+    <div class="method_selector">
+        <div class="method_btn" id="btn_orange" onclick="showSection('orange')">أورنج كاش</div>
+        <div class="method_btn" id="btn_cash" onclick="showSection('cash')">دفع نقداً (كاش)</div>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+    <div id="orange_section">
+        <div class="instruction_box">حول المبلغ لـ <strong>010XXXXXXXX</strong> ثم ارفع البيانات أدناه.</div>
+        <div class="form_group">
+            <label>رقم الهاتف المسجل به </label>
+            <input type="text" id="student_phone_orange" placeholder="01XXXXXXXXX">
+        </div>
+        <div class="form_group">
+            <label>رقم الهاتف الذي حولت منه</label>
+            <input type="text" id="sender_phone" placeholder="01XXXXXXXXX">
+        </div>
+        <div class="form_group">
+            <label>رقم العملية</label>
+            <input type="text" id="process_id" placeholder="أدخل رقم العملية">
+        </div>
+        <div class="form_group">
+            <label for="receipt_file" class="file_input_label" id="file_label">
+                <span>اضغط لرفع صورة الإيصال 📷</span>
+                <input type="file" id="receipt_file" accept="image/*" style="display: none;" onchange="previewImage(this)">
+            </label>
+            <img id="preview_img" src="#">
+        </div>
+        <button class="btn_submit" onclick="submitPayment('orange')">إرسال للمراجعة</button>
+    </div>
+
+    <div id="cash_section">
+        <div class="instruction_box" style="border-right-color: var(--success);">
+            أدخل <strong>رقم هاتفك</strong> المسجل به و <strong>كود التفعيل</strong> لتفعيل حسابك فوراً.
+        </div>
+        <div class="form_group">
+            <label>رقم الهاتف المسجل به </label>
+            <input type="text" id="student_phone_cash" placeholder="01XXXXXXXXX">
+        </div>
+        <div class="form_group">
+            <label>كود التفعيل المستلم</label>
+            <input type="text" id="cash_code" placeholder="أدخل الكود">
+        </div>
+        <button class="btn_submit" style="background: var(--success);" onclick="submitPayment('cash')">تفعيل ودخول فوري</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, get, remove, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let base64Image = "";
+
+    window.showSection = (type) => {
+        document.getElementById('orange_section').style.display = type === 'orange' ? 'block' : 'none';
+        document.getElementById('cash_section').style.display = type === 'cash' ? 'block' : 'none';
+        document.getElementById('btn_orange').classList.toggle('active', type === 'orange');
+        document.getElementById('btn_cash').classList.toggle('active', type === 'cash');
+    };
+
+    window.previewImage = (input) => {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('preview_img').src = e.target.result;
+                document.getElementById('preview_img').style.display = 'block';
+                document.getElementById('file_label').querySelector('span').innerText = "تم اختيار الصورة ✅";
+                base64Image = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    window.submitPayment = async (method) => {
+        document.getElementById('loading').style.display = 'flex';
+        
+        try {
+            if(method === 'orange') {
+                const phoneReg = document.getElementById('student_phone_orange').value.trim();
+                const sender = document.getElementById('sender_phone').value.trim();
+                const process = document.getElementById('process_id').value.trim();
+
+                if(!phoneReg || !sender || !process || !base64Image) throw new Error('يرجى إكمال جميع البيانات');
+
+                await push(ref(db, 'payment_requests'), {
+                    TEL01: phoneReg,
+                    sender_phone: sender,
+                    process_id: process,
+                    receipt_image: base64Image,
+                    status: "pending",
+                    timestamp: new Date().toLocaleString('ar-EG')
+                });
+
+                Swal.fire({ icon: 'success', title: 'تم الإرسال!', text: 'سيقوم المستر بمراجعة طلبك وتفعيلك قريباً.' })
+                .then(() => window.location.href = "index.html");
+
+            } else {
+                const phone = document.getElementById('student_phone_cash').value.trim();
+                const code = document.getElementById('cash_code').value.trim();
+
+                if(!phone || !code) throw new Error('برجاء إدخال رقم الهاتف المسجل والكود');
+
+                // 1. التحقق من الكود
+                const codeRef = ref(db, `cash_payment_codes/${code}`);
+                const codeSnap = await get(codeRef);
+                if (!codeSnap.exists()) throw new Error('كود التفعيل غير صحيح أو تم استخدامه مسبقاً');
+
+                // 2. البحث عن الطالب
+                const studentsRef = ref(db, 'students');
+                const studentQuery = query(studentsRef, orderByChild('TEL01'), equalTo(phone));
+                const studentSnap = await get(studentQuery);
+
+                if (!studentSnap.exists()) throw new Error('رقم الهاتف هذا غير مسجل لدينا');
+
+                const studentsData = studentSnap.val();
+                const studentKey = Object.keys(studentsData)[0]; 
+
+                // 3. تحديث البيانات وحرق الكود
+                await update(ref(db, `students/${studentKey}`), { 
+                    status: "active",
+                    paymentMethod: "cash_code"
+                });
+                await remove(codeRef);
+
+                // 4. أهم تعديل: تنظيف الذاكرة تماماً وحفظ بيانات الطالب الجديد فقط
+                localStorage.clear(); // مسح أي طالب قديم كان مسجل
+                
+                const updatedStudent = { ...studentsData[studentKey], status: "active", id: studentKey };
+                localStorage.setItem('studentCode', studentKey); // لحساب صفحة البروفايل
+                localStorage.setItem('loggedInStudent', JSON.stringify(updatedStudent));
+                
+                // 5. التوجيه لصفحة الملف الشخصي مع تمرير الكود في الرابط للتأكيد القاطع
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'تم تفعيل حسابك!', 
+                    text: 'جاري تحويلك لملفك الشخصي...',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = `student_profile.html?code=${studentKey}`; 
+                });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'خطأ', text: e.message, confirmButtonText: 'حسناً', direction: 'rtl' });
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة امتحان آخر العام | مدرسة الكنيسة</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --bg-body: #F4F1EA;
+            --bg-card: #FFFFFF;
+            --text-main: #5D4037;
+            --text-sub: #8D6E63;
+            --accent: #D4AF37;
+            --card-border: #E0E0E0;
+            --table-header: #5D4037;
+        }
+
+        body.dark-mode {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-sub: #b0b0b0;
+            --accent: #D4AF37;
+            --card-border: #333333;
+            --table-header: #2c1d1a;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-body); margin: 0; padding: 20px; color: var(--text-main); transition: 0.3s; }
+        
+        .result_container { max-width: 600px; margin: 40px auto; background: var(--bg-card); padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 10px solid var(--accent); text-align: center; }
+        
+        .header_icon { font-size: 50px; margin-bottom: 10px; }
+        h2 { margin: 0; color: var(--text-main); }
+        .sub_title { color: var(--accent); font-weight: bold; margin-bottom: 25px; display: block; }
+
+        .search_box { margin-bottom: 30px; }
+        input { padding: 12px; width: 70%; border-radius: 12px; border: 2px solid var(--card-border); background: var(--bg-body); color: var(--text-main); font-size: 16px; outline: none; text-align: center; }
+        button { padding: 12px 25px; border-radius: 12px; border: none; background: var(--accent); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { opacity: 0.9; transform: scale(1.05); }
+
+        #resultCard { display: none; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .student_info { background: var(--bg-body); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid var(--card-border); }
+        .student_info div { margin-bottom: 5px; font-size: 14px; }
+        .student_info strong { color: var(--accent); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; border-radius: 12px; overflow: hidden; }
+        th { background: var(--table-header); color: white; padding: 12px; font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid var(--card-border); background: var(--bg-card); font-weight: 600; }
+
+        .total_score { margin-top: 20px; font-size: 20px; font-weight: 800; color: #2E7D32; }
+        .failed { color: #C62828 !important; }
+        
+        .footer_msg { margin-top: 20px; font-style: italic; color: var(--text-sub); font-size: 13px; }
+        
+        /* تنسيق زرار الدارك مود */
+        .theme-toggle { position: absolute; top: 20px; left: 20px; cursor: pointer; font-size: 24px; background: none; border: none; padding: 0; margin: 0; width: auto; }
+    </style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع الليلي">🌓</button>
+
+<div class="result_container">
+    <div class="header_icon">📜</div>
+    <h2>نتائج امتحانات آخر العام</h2>
+    <span class="sub_title">مدرسة ابؤوروجورجيوس</span>
+
+    <div class="search_box">
+        <input type="text" id="studentCodeInput" placeholder="أدخل كود الطالب هنا">
+        <br>
+        <button onclick="fetchResult()">عرض النتيجة</button>
+    </div>
+
+    <div id="resultCard">
+        <div class="student_info">
+            <div id="resName">الاسم: <strong>...</strong></div>
+            <div id="resCode">كود الطالب: <strong>...</strong></div>
+            <div id="resDate" style="display: none;">تاريخ الرفع: <strong>...</strong></div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>المادة</th>
+                    <th>الدرجة</th>
+                    <th>التقدير</th>
+                </tr>
+            </thead>
+            <tbody id="gradesTable"></tbody>
+        </table>
+
+        <div class="total_score" id="totalScore">
+            المجموع الكلي: <span>0</span>
+        </div>
+        
+        <p class="footer_msg">"النجاح هو ثمرة الاجتهاد.. مبروك لجميع الناجحين"</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // الوظيفة المسؤولة عن قراءة المظهر عند التحميل
+    function applyTheme() {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    }
+    applyTheme();
+
+    // الوظيفة المسؤولة عن التبديل والحفظ في الـ localStorage
+    window.toggleTheme = function() {
+        document.body.classList.toggle('dark-mode');
+        const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+        localStorage.setItem('theme', theme);
+    }
+
+    window.fetchResult = async function() {
+        const code = document.getElementById('studentCodeInput').value.trim();
+        const resultCard = document.getElementById('resultCard');
+        
+        if (!code) {
+            Swal.fire('تنبيه', 'يرجى كتابة كود الطالب أولاً', 'info');
+            return;
+        }
+
+        Swal.fire({ title: 'جاري البحث...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+        try {
+            const studentRef = ref(db, 'exam_results/' + code);
+            const snapshot = await get(studentRef);
+
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                
+                document.getElementById('resName').innerHTML = `الاسم: <strong>${data.studentName || 'غير متوفر'}</strong>`;
+                document.getElementById('resCode').innerHTML = `كود الطالب: <strong>${code}</strong>`;
+                document.getElementById('resDate').innerHTML = `تاريخ النتيجة: <strong>${data.date || 'غير متوفر'}</strong>`;
+
+                let tableHTML = "";
+                
+                const subjectNames = {
+                    agpeya: "الأجبية",
+                    taks: "الطقس",
+                    spiritual: "روحي",
+                    alhan: "ألحان",
+                    behavior: "السلوك والالتزام",
+                    lectures: "المحاضرات"
+                };
+
+                if (data.scores) {
+                    Object.entries(data.scores).forEach(([key, score]) => {
+                        let scoreVal = parseFloat(score);
+                        let gradeText = scoreVal >= 50 ? "ناجح" : "راسب";
+                        let gradeClass = scoreVal < 50 ? "failed" : "";
+                        
+                        tableHTML += `<tr>
+                            <td>${subjectNames[key] || key}</td>
+                            <td>${scoreVal}</td>
+                            <td class="${gradeClass}">${gradeText}</td>
+                        </tr>`;
+                    });
+                }
+
+                document.getElementById('gradesTable').innerHTML = tableHTML;
+                document.getElementById('totalScore').innerHTML = `المجموع: ${data.totalScore} <br> <small>النسبة المئوية: ${data.percentage}%</small>`;
+                
+                Swal.close();
+                resultCard.style.display = 'block';
+            } else {
+                Swal.fire('نعتذر', 'لم يتم العثور على نتيجة لهذا الكود.', 'warning');
+                resultCard.style.display = 'none';
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('خطأ', 'حدث خطأ في الاتصال', 'error');
+        }
+    }
+</script>
+</body>
+</html>

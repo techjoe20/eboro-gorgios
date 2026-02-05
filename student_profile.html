@@ -195,7 +195,6 @@
         .info_card strong { display: block; color: var(--text-main); font-size: 15px; }
         .info_card small { color: var(--text-sub); font-size: 12px; }
 
-        /* ستايل الإشعارات المطور لضمان التمركز */
         .notification-badge {
             background-color: #ff3b30;
             color: white;
@@ -241,6 +240,7 @@
             <li><a href="#" onclick="navigateWithCode('materials.html')">📑 الملازم والكتب</a></li>
             <li><a href="#" onclick="navigateWithCode('exams.html')">✍️ الامتحانات</a></li>
             <li><a href="#" onclick="navigateWithCode('results.html')">🏆 النتائج والتقييمات</a></li>
+            <li><a href="#" onclick="navigateWithCode('final_results.html')">📜 نتيجة امتحان آخر السنة</a></li>
             <li>
                 <a href="#" onclick="goToMessages()" style="display: flex; align-items: center; justify-content: space-between;">
                     <span>💬 الرسائل والتنبيهات</span>
@@ -291,8 +291,8 @@
         <div class="info_card">
             <span>✍️</span>
             <div>
-                <strong>اختبر نفسك</strong>
-                <small>ادخل على الامتحانات بعد كل درس لتقييم مستواك وتجميع النقاط.</small>
+                <strong> امتحانات </strong>
+                <small>ادخل على الامتحانات لتقييم مستواك وتجميع النقاط.</small>
             </div>
         </div>
 
@@ -300,15 +300,15 @@
             <span>💬</span>
             <div>
                 <strong>الرسائل والتنبيهات</strong>
-                <small>تابع هذا القسم يومياً لمعرفة المواعيد والتعليمات الجديدة.</small>
+                <small>اهتم بقرائة الرسائل لمعرفة المواعيد والتعليمات الجديدة.</small>
             </div>
         </div>
 
         <div class="info_card">
             <span>⚙️</span>
             <div>
-                <strong>بروفايلك يعبر عنك</strong>
-                <small>لو في حاجة عايز تعدلها من الاعدادات متاح ليك</small>
+                <strong>  الاعدادات لمحبين الوضع المظلم </strong>
+                <small>لو عايز تغي للوضع المظلم بس لو محتاج تغير بياناتك تواصل مع المسؤولين</small>
             </div>
         </div>
 
@@ -334,25 +334,31 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // وظيفة مراقبة الرسائل
+        // وظيفة مراقبة الرسائل المفلترة
         function listenForMessages() {
+            const studentCode = localStorage.getItem('studentCode'); 
             const messagesRef = ref(db, 'announcements');
+
             onValue(messagesRef, (snapshot) => {
                 const mainBadge = document.getElementById('main_btn_badge');
                 const menuBadge = document.getElementById('msg_badge_menu');
                 
                 if (snapshot.exists()) {
-                    const messages = snapshot.val();
-                    const totalCount = Object.keys(messages).length;
-                    
-                    // قراءة عدد الرسائل المقروءة من قبل
+                    const allMessages = snapshot.val();
+                    let myValidMessagesCount = 0;
+
+                    Object.values(allMessages).forEach(msg => {
+                        if (msg.target === 'all' || msg.target === studentCode) {
+                            myValidMessagesCount++;
+                        }
+                    });
+
                     const lastViewedCount = parseInt(localStorage.getItem('lastViewedMsgCount') || '0');
-                    const newCount = totalCount - lastViewedCount;
+                    const newCount = myValidMessagesCount - lastViewedCount;
 
                     if (newCount > 0) {
                         mainBadge.innerText = newCount > 99 ? "+99" : newCount;
                         mainBadge.style.display = 'flex';
-
                         menuBadge.innerText = newCount;
                         menuBadge.style.display = 'inline-block';
                     } else {
@@ -360,8 +366,7 @@
                         menuBadge.style.display = 'none';
                     }
                     
-                    // حفظ الإجمالي الحالي لاستخدامه عند الضغط
-                    window.currentTotalMessages = totalCount;
+                    window.currentTotalMessages = myValidMessagesCount;
                 } else {
                     mainBadge.style.display = 'none';
                     menuBadge.style.display = 'none';
@@ -373,7 +378,8 @@
 
         async function loadStudentData() {
             const urlParams = new URLSearchParams(window.location.search);
-            const studentCode = urlParams.get('code');
+            // تعديل ذكي: لو مفيش كود في الرابط، خده من الـ LocalStorage اللي سجلناه في صفحة الدفع
+            let studentCode = urlParams.get('code') || localStorage.getItem('studentCode');
 
             if (!studentCode) {
                 window.location.href = "index.html";
@@ -416,8 +422,7 @@
         };
 
         window.navigateWithCode = function(pageName) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
+            const code = localStorage.getItem('studentCode');
             if (code) {
                 window.location.href = `${pageName}?code=${code}`;
             } else {
@@ -425,7 +430,6 @@
             }
         }
 
-        // الوظيفة الجديدة لتصفير الإشعارات عند الضغط
         window.goToMessages = function() {
             if (window.currentTotalMessages !== undefined) {
                 localStorage.setItem('lastViewedMsgCount', window.currentTotalMessages);

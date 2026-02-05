@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مراجعة طلبات الدفع | الإدارة</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --admin-color: #1e293b; --accent-color: #d4af37; --bg-color: #f1f5f9; 
+            --success: #10b981; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #334155; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: var(--admin-color); color: white; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .back-btn { background: var(--accent-color); color: var(--admin-color); text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        .table_outer { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        thead { background: #f8fafc; }
+        th, td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        .receipt-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #ddd; transition: 0.3s; }
+        .receipt-img:hover { transform: scale(1.1); }
+        .btn-approve { background: #dcfce7; color: var(--success); border: 1px solid #bbf7d0; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-approve:hover { background: var(--success); color: white; }
+        .btn-reject { background: #fee2e2; color: var(--danger); border: 1px solid #fecaca; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .btn-reject:hover { background: var(--danger); color: white; }
+        
+        .student-name { font-weight: bold; color: var(--admin-color); display: block; margin-bottom: 4px; font-size: 15px; }
+        .badge-code { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px solid #fde68a; font-size: 12px; }
+        .badge-phone { background: #e0f2fe; color: var(--info); padding: 4px 8px; border-radius: 5px; font-size: 12px; display: inline-block; margin-top: 5px; }
+        
+        .empty-msg { padding: 50px; text-align: center; color: #94a3b8; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h2 style="margin:0">مراجعة إيصالات الدفع (أورنج كاش) 💳</h2>
+            <p style="margin:5px 0 0; opacity:0.8">البحث التلقائي عن اسم وكود الطالب</p>
+        </div>
+        <a href="admin-study.html" class="back-btn">العودة للوحة التحكم</a>
+    </div>
+
+    <div class="table_outer">
+        <table>
+            <thead>
+                <tr>
+                    <th>الصورة</th>
+                    <th>بيانات الطالب (من النظام)</th>
+                    <th>رقم المرسل (أورنج)</th>
+                    <th>رقم العملية</th>
+                    <th>وقت الإرسال</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="requests_list"></tbody>
+        </table>
+        <div id="no_data" class="empty-msg" style="display:none;">لا توجد طلبات دفع معلقة حالياً.</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue, remove, update, get, query, orderByChild, equalTo, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    async function loadRequests() {
+        const listContainer = document.getElementById('requests_list');
+        const noData = document.getElementById('no_data');
+
+        onValue(ref(db, 'payment_requests'), async (snapshot) => {
+            listContainer.innerHTML = "";
+            if (snapshot.exists()) {
+                noData.style.display = "none";
+                const requests = snapshot.val();
+                
+                for (const [key, req] of Object.entries(requests).reverse()) {
+                    let studentCode = "غير موجود";
+                    let studentName = "اسم غير مسجل";
+                    
+                    const studentsRef = ref(db, 'students');
+                    const studentQuery = query(studentsRef, orderByChild('TEL01'), equalTo(req.TEL01));
+                    const studentSnap = await get(studentQuery);
+
+                    if (studentSnap.exists()) {
+                        const studentData = studentSnap.val();
+                        studentCode = Object.keys(studentData)[0];
+                        studentName = studentData[studentCode].USR01 || "بدون اسم";
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><img src="${req.receipt_image}" class="receipt-img" onclick="viewImage('${req.receipt_image}')"></td>
+                        <td>
+                            <span class="student-name">${studentName}</span>
+                            <span class="badge-code">كود: ${studentCode}</span><br>
+                            <span class="badge-phone">هاتف التسجيل: ${req.TEL01}</span>
+                        </td>
+                        <td><strong>${req.sender_phone}</strong></td>
+                        <td><small>${req.process_id}</small></td>
+                        <td><small>${req.timestamp}</small></td>
+                        <td>
+                            <button class="btn-approve" onclick="approveRequest('${key}', '${studentCode}', '${studentName}', '${req.TEL01}')">تفعيل ✅</button>
+                            <button class="btn-reject" onclick="rejectRequest('${key}')">رفض ❌</button>
+                        </td>
+                    `;
+                    listContainer.appendChild(tr);
+                }
+            } else {
+                noData.style.display = "block";
+            }
+        });
+    }
+
+    window.viewImage = (url) => {
+        Swal.fire({ imageUrl: url, imageAlt: 'إيصال الدفع', confirmButtonText: 'إغلاق' });
+    };
+
+    window.approveRequest = async (requestId, studentCode, studentName, phone) => {
+        if (studentCode === "غير موجود") {
+            Swal.fire('خطأ', 'هذا الرقم غير مسجل في النظام كطالب!', 'error');
+            return;
+        }
+
+        const { value: confirm } = await Swal.fire({
+            title: 'تأكيد تفعيل الطالب',
+            text: `هل أنت متأكد من تفعيل حساب الطالب: ${studentName} (كود: ${studentCode})؟`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'نعم، تفعيل الطالب',
+            cancelButtonText: 'تراجع'
+        });
+
+        if (confirm) {
+            try {
+                // 1. تحديث حالة الطالب في جدول students
+                await update(ref(db, `students/${studentCode}`), {
+                    status: "active",
+                    paymentMethod: "orange_cash_verified",
+                    activationDate: new Date().toLocaleString('ar-EG')
+                });
+
+                // 2. حفظ البيانات في سجل "مدفوع" (Archiving)
+                await set(ref(db, `paid_history/${studentCode}`), {
+                    student_name: studentName,
+                    student_code: studentCode,
+                    phone_number: phone,
+                    activation_date: new Date().toLocaleString('ar-EG'),
+                    payment_status: "paid"
+                });
+
+                // 3. حذف الطلب من قائمة الانتظار
+                await remove(ref(db, `payment_requests/${requestId}`));
+                
+                Swal.fire('تم بنجاح', `تم تفعيل حساب ${studentName} وحفظ بياناته في السجل.`, 'success');
+            } catch (e) {
+                Swal.fire('خطأ', 'فشل التفعيل: ' + e.message, 'error');
+            }
+        }
+    };
+
+    window.rejectRequest = async (id) => {
+        const { value: confirm } = await Swal.fire({
+            title: 'رفض الإيصال؟',
+            text: "سيتم حذف هذا الطلب ولن يتم تفعيل الطالب.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'حذف الإيصال'
+        });
+        if (confirm) {
+            await remove(ref(db, `payment_requests/${id}`));
+            Swal.fire('تم الحذف', 'تم رفض الطلب بنجاح', 'info');
+        }
+    };
+
+    window.onload = loadRequests;
+</script>
+</body>
+</html>

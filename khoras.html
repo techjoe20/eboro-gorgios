@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مكتبة ألحان الخورس | مدرسة ابؤورو</title>
+    <style>
+        :root {
+            --primary: #5D4037;
+            --accent: #D4AF37;
+            --bg: #F9F7F2;
+            --card-bg: #ffffff;
+            --text: #3E2723;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .section_title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section_title h2 {
+            border-bottom: 3px solid var(--accent);
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        /* شبكة الفيديوهات */
+        .lectures_grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .video_card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: 0.3s;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .video_card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .thumbnail_container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background: #000;
+            cursor: pointer;
+        }
+
+        .thumbnail_container img {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        .play_overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .video_card:hover .play_overlay { opacity: 1; }
+
+        .play_icon {
+            font-size: 50px;
+            color: var(--accent);
+        }
+
+        .video_info {
+            padding: 20px;
+        }
+
+        .video_title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .video_desc {
+            font-size: 0.9rem;
+            color: #6d6d6d;
+            line-height: 1.5;
+            height: 45px;
+            overflow: hidden;
+        }
+
+        /* المشغل المدمج (Modal) */
+        .video_modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal_content {
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+        }
+
+        .close_modal {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .iframe_wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+        }
+
+        .iframe_wrapper iframe {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 10px;
+        }
+
+        .loading_msg {
+            text-align: center;
+            font-size: 1.2rem;
+            padding: 50px;
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 600px) {
+            .lectures_grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🎶 خورس الشمامسة</h1>
+</header>
+
+<div class="container">
+    <div class="section_title">
+        <h2>مكتبة الألحان والطقوس</h2>
+        <p>تعلم ألحان الكنيسة بروحانية وإتقان</p>
+    </div>
+
+    <div id="khourus_list" class="lectures_grid">
+        <div class="loading_msg">جاري تحميل الألحان...</div>
+    </div>
+</div>
+
+<div id="videoModal" class="video_modal">
+    <div class="modal_content">
+        <span class="close_modal" onclick="closePlayer()">&times; إغلاق</span>
+        <div class="iframe_wrapper" id="playerContainer">
+            </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // إعدادات فايربيز
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const khourusRef = ref(db, 'khourus_lectures');
+
+    // دالة لاستخراج ID اليوتيوب لعمل الصورة المصغرة
+    function getYouTubeID(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    // جلب البيانات وعرضها
+    onValue(khourusRef, (snapshot) => {
+        const list = document.getElementById('khourus_list');
+        list.innerHTML = "";
+        
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            Object.keys(data).forEach(key => {
+                const item = data[key];
+                const videoId = getYouTubeID(item.link);
+                const thumb = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://via.placeholder.com/480x270?text=No+Image';
+
+                list.innerHTML += `
+                    <div class="video_card">
+                        <div class="thumbnail_container" onclick="openPlayer('${videoId}')">
+                            <img src="${thumb}" alt="${item.title}">
+                            <div class="play_overlay">
+                                <div class="play_icon">▶</div>
+                            </div>
+                        </div>
+                        <div class="video_info">
+                            <div class="video_title">${item.title}</div>
+                            <div class="video_desc">${item.desc || 'لا يوجد وصف متاح لهذا اللحن.'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            list.innerHTML = "<div class='loading_msg'>لا توجد دروس خورس حالياً. ترقبوا قريباً!</div>";
+        }
+    });
+
+    // التحكم في المشغل
+    window.openPlayer = (id) => {
+        if(!id) return alert("الرابط غير صالح");
+        const container = document.getElementById('playerContainer');
+        container.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        document.getElementById('videoModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closePlayer = () => {
+        document.getElementById('playerContainer').innerHTML = "";
+        document.getElementById('videoModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+</script>
+
+</body>
+</html>

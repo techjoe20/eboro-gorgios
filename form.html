@@ -6,7 +6,7 @@
     <title>تسجيل بيانات الخادم | الكنيسة</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* التنسيقات والأنيميشن كما هي تماماً بدون تغيير حرف */
+        /* التنسيقات والأنيميشن كما هي تماماً بدون تغيير */
         @keyframes fadeInPage { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         body { font-family: 'Segoe UI', sans-serif; background-color: #F4F1EA; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .form_container { background-color: #FFFFFF; padding: 40px; border-radius: 25px; box-shadow: 0 20px 40px rgba(93, 64, 55, 0.15); width: 100%; max-width: 650px; border-top: 10px solid #D4AF37; animation: fadeInPage 0.8s ease-out; }
@@ -17,8 +17,24 @@
         label { display: block; margin-bottom: 8px; color: #5D4037; font-weight: 600; font-size: 14px; }
         input, select { width: 100%; padding: 12px 15px; border: 2px solid #E0E0E0; border-radius: 12px; box-sizing: border-box; background-color: #FAFAFA; }
         .dob_container { display: flex; gap: 10px; }
-        .upload_wrapper { position: relative; width: 100%; height: 100px; border: 2px dashed #D4AF37; border-radius: 15px; background-color: #FFFDF5; display: flex; justify-content: center; align-items: center; cursor: pointer; }
-        .upload_wrapper input[type="file"] { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        
+        /* إطار الصورة المطور */
+        .upload_wrapper { 
+            position: relative; 
+            width: 100%; 
+            min-height: 150px; 
+            border: 2px dashed #D4AF37; 
+            border-radius: 15px; 
+            background-color: #FFFDF5; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            cursor: pointer; 
+            overflow: hidden; 
+        }
+        .upload_wrapper input[type="file"] { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+        #imgPreview { width: 100%; height: 100%; object-fit: contain; display: none; background-color: #eee; }
+        
         .submit_btn { background: linear-gradient(135deg, #5D4037 0%, #3E2723 100%); color: white; padding: 16px; border: none; border-radius: 15px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 25px; }
         .form_id { text-align: center; font-size: 11px; color: #BDBDBD; margin-top: 20px; }
         @media (max-width: 600px) { .form_grid { grid-template-columns: 1fr; } .full_width { grid-column: span 1; } }
@@ -85,7 +101,8 @@
                 <div class="form_group full_width">
                     <label>صورة الطالب الشخصية</label>
                     <div class="upload_wrapper">
-                        <span class="upload_text" id="uploadStatus">اضغط هنا لاختيار صورة الطالب</span>
+                        <img id="imgPreview" alt="Preview">
+                        <span class="upload_text" id="uploadStatus">اضغط هنا لرفع الصورة</span>
                         <input type="file" id="IMG01" accept="image/*" required>
                     </div>
                 </div>
@@ -116,8 +133,20 @@
         const btn = document.getElementById('submitBtn');
         const fileInput = document.getElementById('IMG01');
         const uploadStatus = document.getElementById('uploadStatus');
+        const imgPreview = document.getElementById('imgPreview');
 
-        fileInput.onchange = () => { if (fileInput.files[0]) uploadStatus.innerText = "تم اختيار: " + fileInput.files[0].name; };
+        fileInput.onchange = () => { 
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => { 
+                    imgPreview.src = e.target.result;
+                    imgPreview.style.display = "block";
+                    uploadStatus.style.display = "none";
+                };
+                reader.readAsDataURL(file);
+            } 
+        };
 
         const toBase64 = file => new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -126,20 +155,36 @@
             reader.onerror = error => reject(error);
         });
 
-        // دالة توليد كود عشوائي من 6 أرقام
-        const generateRandomCode = () => {
-            return Math.floor(100000 + Math.random() * 900000).toString();
-        };
-
         form.onsubmit = async (e) => {
             e.preventDefault();
+
+            const birthDay = parseInt(document.getElementById('DAY01').value);
+            const birthMonth = parseInt(document.getElementById('MON01').value);
+            const birthYear = parseInt(document.getElementById('YEA01').value);
             
-            // توليد الكود العشوائي المميز
-            const randomID = generateRandomCode();
+            const today = new Date();
+            let age = today.getFullYear() - birthYear;
+            const monthDiff = today.getMonth() + 1 - birthMonth;
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDay)) {
+                age--;
+            }
+
+            // شرط العمر: إذا لم يتحقق، لا يتم تنفيذ أي كود إرسال للفايربيز
+            if (age < 8) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'عذراً.. السن غير مناسب',
+                    text: 'يجب أن يكون عمر الطالب 8 سنوات على الأقل للالتحاق بالمدرسة.',
+                    confirmButtonText: 'مفهوم'
+                });
+                return; 
+            }
+            
+            const randomID = Math.floor(100000 + Math.random() * 900000).toString();
             const file = fileInput.files[0];
 
             btn.disabled = true;
-            btn.innerText = "جاري الإرسال...";
+            btn.innerText = "جاري الحفظ...";
 
             try {
                 let base64Image = "";
@@ -151,37 +196,40 @@
                     TEL02: document.getElementById('TEL02').value,
                     ADR01: document.getElementById('ADR01').value,
                     FR01: document.getElementById('FR01').value,
-                    DOB: `${document.getElementById('DAY01').value}-${document.getElementById('MON01').value}-${document.getElementById('YEA01').value}`,
+                    DOB: `${birthDay}-${birthMonth}-${birthYear}`,
                     YR01: document.getElementById('YR01').value,
                     STG01: document.getElementById('STG01').value,
                     RNK01: document.getElementById('RNK01').value,
                     BISH01: document.getElementById('BISH01').value,
                     LVL01: document.getElementById('LVL01').value,
                     IMG_URL: base64Image,
-                    STUDENT_CODE: randomID, // حفظ الكود داخل البيانات أيضاً للرجوع إليه
+                    STUDENT_CODE: randomID,
                     DATE_REF: new Date().toLocaleString()
                 };
 
-                // الحفظ باستخدام الكود العشوائي كـ Key
+                // حفظ البيانات فوراً في قاعدة البيانات
                 await set(dbRef(db, 'students/' + randomID), studentData);
 
+                // بعد نجاح الحفظ، ننتقل لصفحة الدفع
                 Swal.fire({ 
                     icon: 'success', 
-                    title: 'تم التسجيل بنجاح', 
-                    text: 'كود الطالب الخاص بك هو: ' + randomID,
-                    confirmButtonText: 'ذهاب للبروفايل'
-                })
-                .then(() => { 
-                    window.location.href = `student_profile.html?code=${randomID}`; 
+                    title: 'تم تسجيل بياناتك بنجاح', 
+                    text: 'سيتم تحويلك الآن لتأكيد الدفع واستلام كود الطالب الخاص بك.',
+                    confirmButtonText: 'الانتقال للدفع الآن',
+                    allowOutsideClick: false
+                }).then((result) => { 
+                    if (result.isConfirmed) {
+                        window.location.href = `pay.html?code=${randomID}`; 
+                    }
                 });
 
             } catch (error) {
-                Swal.fire('خطأ', 'تأكد من إعدادات الفايربيز', 'error');
+                Swal.fire('خطأ', 'حدثت مشكلة في الاتصال بالقاعدة، حاول مرة أخرى.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerText = "إرسال البيانات للتسجيل";
             }
         };
     </script>
-</body>
+</body> 
 </html>

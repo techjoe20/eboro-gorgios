@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>محاضراتي | مدرسة الكنيسة</title>
     <style>
+        /* التنسيقات الأصلية بدون تغيير */
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         :root {
             --bg-color: #F4F1EA;
@@ -15,9 +17,10 @@
             --header-bg: #FFFFFF;
             --shadow: rgba(93, 64, 55, 0.1);
             --border-color: rgba(93, 64, 55, 0.05);
+            --accent: #D4AF37;
         }
 
-        /* أنماط الوضع الداكن */
+        /* تعديل نظام الدارك مود ليعمل بالكلاس */
         body.dark-mode {
             --bg-color: #1a1a1a;
             --card-bg: #2d2d2d;
@@ -36,6 +39,7 @@
             padding: 0;
             min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
         }
 
         header {
@@ -64,216 +68,682 @@
             text-decoration: none;
         }
 
-        header h2 { color: var(--text-main); margin: 0; font-size: 18px; }
-
-        .lessons_container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .lesson_card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 8px 20px var(--shadow);
-            transition: all 0.3s ease;
-            animation: fadeInUp 0.6s ease-out;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .lesson_card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 35px var(--shadow);
-        }
-
-        .video_thumbnail {
-            width: 100%;
-            height: 180px;
-            background-color: #000;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .video_thumbnail img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .play_icon {
+        /* زر الدارك مود العائم */
+        .dark_mode_toggle {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(212, 175, 55, 0.9);
+            left: 15px;
+            background: var(--accent);
             color: white;
-            width: 55px;
-            height: 55px;
+            border: none;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 18px;
+            box-shadow: 0 2px 10px var(--shadow);
         }
 
-        .lesson_info { 
-            padding: 20px; 
-            text-align: right; 
-            display: flex; 
+        .attendance_tracker {
+            background: var(--card-bg);
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
             flex-direction: column;
-            flex-grow: 1;
-        }
-
-        .lesson_title {
-            color: var(--text-main);
-            font-size: 19px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .lesson_desc {
-            color: var(--text-secondary);
-            font-size: 14px;
-            line-height: 1.6;
-            height: 45px;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            margin-bottom: 10px;
-        }
-
-        .watch_btn {
-            margin-top: auto;
-            display: block;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
             width: 100%;
-            padding: 12px 0;
-            background: #D4AF37;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 12px;
+        }
+
+        .timer_display {
+            font-size: 18px;
             font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: #eee;
+            color: #333;
             transition: 0.3s;
+        }
+
+        .timer_low { background: #e0e0e0; color: #666; }
+        .timer_20 { background: #ffe0b2; color: #e65100; }
+        .timer_50 { background: #bbdefb; color: #0d47a1; }
+        .timer_80 { background: #c8e6c9; color: #1b5e20; }
+        .timer_100 { background: #fff9c4; color: #fbc02d; border: 2px solid #fbc02d; }
+
+        .tabs_container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px 10px 0;
+        }
+
+        .tab_btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px var(--shadow);
+            transition: 0.3s;
+        }
+
+        .tab_btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        #lecture_view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 2000;
+            overflow-y: auto;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .view_content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .video_wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #000;
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+
+        #video_frame_container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .quiz_container {
+            background: var(--card-bg);
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px var(--shadow);
+            text-align: right;
+            margin-bottom: 50px;
+        }
+
+        .q_block { margin-bottom: 25px; padding: 15px; border-bottom: 1px solid var(--border-color); }
+        .q_text { font-weight: bold; margin-bottom: 12px; display: block; font-size: 17px; }
+        .opt_label { display: block; padding: 12px; margin: 8px 0; background: var(--bg-color); border-radius: 10px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .opt_label:hover { border-color: var(--accent); }
+        .opt_label input { margin-left: 10px; accent-color: var(--accent); }
+        .correct_ans { background: #d4edda !important; border-color: #28a745 !important; color: #155724; }
+        .wrong_ans { background: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
+
+        #pageLock { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 50px 20px; text-align: center; }
+        .lock_card { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px var(--shadow); max-width: 400px; width: 100%; }
+        .lessons_container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .lesson_card { background: var(--card-bg); border-radius: 20px; overflow: hidden; box-shadow: 0 8px 20px var(--shadow); transition: all 0.3s ease; animation: fadeInUp 0.6s ease-out; border: 1px solid var(--border-color); display: flex; flex-direction: column; position: relative; }
+        .lesson_card:hover { transform: translateY(-10px); }
+        
+        .video_type_badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e6ff03;
+            color: #000;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 5;
+            border: 1px solid #000;
+        }
+
+        .video_thumbnail { width: 100%; height: 180px; background-color: #000; position: relative; cursor: pointer; }
+        .video_thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .play_icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(212, 175, 55, 0.9); color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .lesson_info { padding: 20px; text-align: right; display: flex; flex-direction: column; flex-grow: 1; }
+        .lesson_title { color: var(--text-main); font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+        .lesson_desc { color: var(--text-secondary); font-size: 14px; line-height: 1.6; height: 45px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 10px; }
+        .watch_btn { margin-top: auto; display: block; width: 100%; padding: 12px 0; background: var(--accent); color: white; text-align: center; text-decoration: none; border-radius: 12px; font-weight: bold; transition: 0.3s; border: none; cursor: pointer; }
+        
+        .modal_content input, .lock_card input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--border-color); border-radius: 10px; background: var(--bg-color); color: var(--text-main); text-align: center; font-size: 18px; box-sizing: border-box; }
+        .loading, .no_data { grid-column: 1 / -1; text-align: center; padding: 100px; color: var(--text-main); font-weight: bold; }
+
+        #student_code_section {
+            width: 100%;
+            margin-top: 10px;
+            display: none;
+            animation: fadeInUp 0.5s ease;
+            box-sizing: border-box;
+        }
+        #student_code_section input {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px;
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            text-align: center;
             box-sizing: border-box;
         }
 
-        .watch_btn:hover { background: #5D4037; }
-
-        .loading {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 100px;
-            color: var(--text-main);
+        #toast_container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 350px;
+        }
+        .toast {
+            background: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            font-size: 14px;
             font-weight: bold;
+            text-align: center;
+            animation: fadeInUp 0.4s ease;
+            border-right: 5px solid var(--accent);
         }
     </style>
-    
-    <script>
-        if (localStorage.getItem('theme') === 'dark') {
-            document.documentElement.classList.add('dark-mode');
-            // سنقوم بإضافته للـ body في window.onload أيضاً لضمان التوافق
-        }
-    </script>
 </head>
 <body>
+
+    <div id="toast_container"></div>
 
     <header>
         <button class="back_btn" onclick="history.back()">رجوع</button>
         <h2>📚 مكتبة المحاضرات</h2>
     </header>
 
-    <main>
-        <div id="lessons_list" class="lessons_container">
-            <div class="loading">جاري جلب المحاضرات...</div>
+    <div id="lecture_view">
+        <header>
+            <button class="back_btn" onclick="closeLecture()">إغلاق X</button>
+            <h2 id="view_title">اسم المحاضرة</h2>
+        </header>
+        <div class="view_content">
+            <div class="video_wrapper">
+                <div id="video_frame_container"></div>
+            </div>
+
+            <div class="attendance_tracker">
+                <div id="timer_box" class="timer_display timer_low">
+                    مدة المشاهدة: <span id="watched_seconds">0</span> ثانية (<span id="watch_percent">0</span>%)
+                </div>
+                <div id="attendance_status" style="font-size: 13px; font-weight: bold;">يجب مشاهدة 80% لتسجيل الحضور</div>
+                
+                <div id="student_code_section">
+                    <p style="margin: 5px 0; font-size: 14px; color: var(--accent); font-weight: bold;">يرجى إدخال كود الطالب الخاص بك لتأكيد الحضور:</p>
+                    <input type="text" id="activeStudentCode" placeholder="أدخل كود الطالب هنا...">
+                </div>
+            </div>
+
+            <div class="quiz_container">
+                <h3>📝 أسئلة المحاضرة</h3>
+                <div id="questions_area"></div>
+                <div id="quiz_result" style="display:none; margin-top: 20px; font-weight: 900; text-align: center; padding: 20px; border-radius: 15px; border: 3px solid #28a745; font-size: 18px; color: #155724;"></div>
+                <button id="submit_quiz_btn" class="watch_btn" style="display:none; margin-top: 20px;" onclick="checkAnswers()">تصحيح الإجابات</button>
+            </div>
         </div>
+    </div>
+
+    <div class="tabs_container">
+        <button class="tab_btn active" id="onlineTab" onclick="switchTab('online')">محاضرات أونلاين</button>
+        <button class="tab_btn" id="offlineTab" onclick="switchTab('offline')">محاضرات حصص</button>
+    </div>
+
+    <div id="pageLock" style="display:none;">
+        <div class="lock_card">
+            <h3>دخول القسم</h3>
+            <p>يرجى إدخال البيانات المطلوبة لعرض المحاضرات</p>
+            <input type="text" id="pageCodeInput" placeholder="أدخل كود الحصة العام...">
+            <input type="text" id="studentCodeInput" placeholder="أدخل كود الطالب الخاص بك...">
+            <button class="watch_btn" id="submitBtn" onclick="verifyPageCode()">دخول</button>
+        </div>
+    </div>
+
+    <main>
+        <div id="lessons_list" class="lessons_container"></div>
     </main>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <script src="https://www.youtube.com/iframe_api"></script>
 
-        // تطبيق الوضع الداكن بناءً على التخزين المحلي
-        function applyTheme() {
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-            } else {
-                document.body.classList.remove('dark-mode');
-            }
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, get, set, push, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+        authDomain: "eboro-93073.firebaseapp.com",
+        databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+        projectId: "eboro-93073",
+        storageBucket: "eboro-93073.firebasestorage.app",
+        messagingSenderId: "502542505811",
+        appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // نظام الدارك مود من اللوكل هوست
+    window.toggleDarkMode = () => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    };
+
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+
+    window.showToast = (msg) => {
+        const container = document.getElementById('toast_container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerText = msg;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 500);
+        }, 3500);
+    };
+
+    let currentTab = 'online'; 
+    let isPageUnlocked = false;
+    let player;
+    let watchTimer;
+    let totalWatchedSeconds = 0;
+    let hasReportedAttendance = false;
+    let currentQuestions = [];
+    let isPageVisible = true;
+    let currentLectureId = "";
+    let lecturesDataCache = {};
+
+    function cleanText(t) {
+        if (!t) return "";
+        return String(t).trim().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, "");
+    }
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            isPageVisible = false;
+            pauseWatching();
+        } else {
+            isPageVisible = true;
         }
+    });
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
-            authDomain: "eboro-93073.firebaseapp.com",
-            databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
-            projectId: "eboro-93073",
-            storageBucket: "eboro-93073.firebasestorage.app",
-            messagingSenderId: "502542505811",
-            appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+    function pauseWatching() {
+        clearInterval(watchTimer);
+        if (player && player.pauseVideo && player.getPlayerState() === YT.PlayerState.PLAYING) {
+            player.pauseVideo();
+        }
+    }
+
+    window.openLesson = (lectureId) => {
+        const item = lecturesDataCache[lectureId];
+        if(!item) return;
+        const videoUrl = item.link || item.video_url || "";
+        const title = item.title || "";
+        const questions = item.questions || [];
+        openLectureFrame(videoUrl, title, questions, lectureId);
+    };
+
+    window.openLectureFrame = (url, title, questions = [], lectureId = "unknown") => {
+        const videoId = extractYouTubeId(url);
+        if (!videoId) return showToast("⚠️ رابط الفيديو غير صحيح");
+        
+        currentLectureId = lectureId;
+        document.getElementById('view_title').innerText = title;
+        document.getElementById('lecture_view').style.display = 'block';
+        document.body.style.overflow = 'hidden'; 
+
+        totalWatchedSeconds = 0;
+        hasReportedAttendance = false;
+        document.getElementById('student_code_section').style.display = 'none';
+        
+        const savedCode = localStorage.getItem('studentCode') || "";
+        document.getElementById('activeStudentCode').value = savedCode;
+        
+        updateTimerUI(0, 0);
+
+        if (typeof YT !== 'undefined' && YT.Player) {
+            if (player && typeof player.destroy === 'function') { player.destroy(); }
+            player = new YT.Player('video_frame_container', {
+                videoId: videoId,
+                playerVars: { 'rel': 0, 'modestbranding': 1, 'controls': 1 },
+                events: { 'onStateChange': onPlayerStateChange }
+            });
+        }
+        displayQuiz(questions);
+    };
+
+    function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING) {
+            if (!isPageVisible) {
+                player.pauseVideo();
+                return;
+            }
+            clearInterval(watchTimer); 
+            watchTimer = setInterval(() => {
+                if (isPageVisible && player && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                    totalWatchedSeconds++;
+                    const duration = player.getDuration();
+                    if (duration > 0) {
+                        const realPercent = Math.min(Math.floor((totalWatchedSeconds / duration) * 100), 100);
+                        updateTimerUI(totalWatchedSeconds, realPercent);
+                        if (realPercent >= 50) {
+                            document.getElementById('student_code_section').style.display = 'block';
+                        }
+                        checkAttendanceThreshold(duration);
+                    }
+                }
+            }, 1000);
+        } else {
+            clearInterval(watchTimer);
+        }
+    }
+
+    async function updateStudentEvaluation(seconds, percent, status = "تحديث مشاهدة") {
+        const sCode = document.getElementById('activeStudentCode').value.trim() || localStorage.getItem('studentCode') || "guest";
+        const lTitle = document.getElementById('view_title').innerText;
+        
+        const evaluationData = {
+            student_code: sCode,
+            lecture: lTitle,
+            watched_seconds: seconds,
+            watch_percentage: percent + "%",
+            timestamp: new Date().toLocaleString('ar-EG'),
+            status: status
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        try {
+            await push(ref(db, 'attendance_logs'), evaluationData);
+        } catch (e) { console.error("Error updating logs", e); }
+    }
 
-        async function fetchLectures() {
-            const lessonsList = document.getElementById('lessons_list');
-            
+    function updateTimerUI(seconds, percent) {
+        const timerBox = document.getElementById('timer_box');
+        const statusText = document.getElementById('attendance_status');
+        document.getElementById('watched_seconds').innerText = seconds;
+        document.getElementById('watch_percent').innerText = percent;
+        timerBox.className = "timer_display"; 
+        if (percent < 20) timerBox.classList.add('timer_low');
+        else if (percent < 50) timerBox.classList.add('timer_20');
+        else if (percent < 80) timerBox.classList.add('timer_50');
+        else if (percent < 100) {
+            timerBox.classList.add('timer_80');
+            statusText.innerText = "✅ تم تسجيل حضورك بنجاح";
+            statusText.style.color = "green";
+        } else {
+            timerBox.classList.add('timer_100');
+            statusText.innerText = "🏆 أتممت المشاهدة كاملة!";
+        }
+    }
+
+    async function checkAttendanceThreshold(duration) {
+        if (hasReportedAttendance) return;
+        const threshold = duration * 0.8; 
+        if (totalWatchedSeconds >= threshold) {
+            hasReportedAttendance = true;
+            const realPercent = Math.min(Math.floor((totalWatchedSeconds / duration) * 100), 100);
+            updateStudentEvaluation(totalWatchedSeconds, realPercent, "حضر (80% فأكثر)");
+        }
+    }
+
+    window.closeLecture = () => {
+        const duration = player ? player.getDuration() : 0;
+        const realPercent = duration > 0 ? Math.min(Math.floor((totalWatchedSeconds / duration) * 100), 100) : 0;
+        updateStudentEvaluation(totalWatchedSeconds, realPercent, "إغلاق الفيديو");
+        if (player && player.stopVideo) { player.stopVideo(); }
+        clearInterval(watchTimer);
+        document.getElementById('lecture_view').style.display = 'none';
+        document.getElementById('video_frame_container').innerHTML = '';
+        document.body.style.overflow = 'auto';
+    };
+
+    window.displayQuiz = async (questions) => {
+        const area = document.getElementById('questions_area');
+        const submitBtn = document.getElementById('submit_quiz_btn');
+        const res = document.getElementById('quiz_result');
+        area.innerHTML = "";
+        res.style.display = "none";
+        currentQuestions = Array.isArray(questions) ? questions : [];
+        if (currentQuestions.length === 0) {
+            area.innerHTML = "<p>لا توجد أسئلة لهذه المحاضرة.</p>";
+            submitBtn.style.display = "none";
+            return;
+        }
+        const sCode = document.getElementById('activeStudentCode').value.trim() || localStorage.getItem('studentCode') || "guest";
+        const quizKey = `quiz_done_${sCode}_${currentLectureId}`;
+        const isAlreadySolved = localStorage.getItem(quizKey);
+        currentQuestions.forEach((q, qIndex) => {
+            let opts = "";
+            if(q.options && Array.isArray(q.options)) {
+                q.options.forEach((opt, oIdx) => {
+                    const isDisabled = isAlreadySolved ? 'disabled' : '';
+                    opts += `<label class="opt_label" id="label_${qIndex}_${oIdx}">
+                                <input type="radio" name="q${qIndex}" value="${oIdx}" ${isDisabled}> ${opt}
+                             </label>`;
+                });
+            }
+            area.innerHTML += `<div class="q_block"><span class="q_text">${qIndex + 1}- ${q.question}</span>${opts}</div>`;
+        });
+        if (isAlreadySolved) {
+            submitBtn.style.display = "none";
+            res.style.display = "block";
+            res.innerHTML = "⚠️ لقد قمت بالإجابة مسبقاً. الإجابات الصحيحة موضحة بالأخضر.";
+            res.style.background = "#fff3cd";
+            res.style.borderColor = "#ffeeba";
+            currentQuestions.forEach((q, qIndex) => {
+                const correctLabel = document.getElementById(`label_${qIndex}_${q.correct}`);
+                if(correctLabel) correctLabel.classList.add('correct_ans');
+            });
+        } else {
+            submitBtn.style.display = "block";
+        }
+    };
+
+    window.checkAnswers = async () => {
+        const studentCodeInput = document.getElementById('activeStudentCode');
+        const sCode = studentCodeInput.value.trim() || localStorage.getItem('studentCode') || "";
+        
+        if(!sCode) {
+            showToast("⚠️ يرجى إدخال كود الطالب أولاً لتسجيل النتيجة!");
+            studentCodeInput.focus();
+            return;
+        }
+
+        let allAnswered = true;
+        currentQuestions.forEach((_, i) => {
+            if(!document.querySelector(`input[name="q${i}"]:checked`)) allAnswered = false;
+        });
+        if(!allAnswered) {
+            if(!confirm("لم تقم بالإجابة على جميع الأسئلة، هل تريد الاستمرار؟")) return;
+        }
+        let score = 0;
+        currentQuestions.forEach((q, qIndex) => {
+            const sel = document.querySelector(`input[name="q${qIndex}"]:checked`);
+            const correctIdx = parseInt(q.correct);
+            const correctLabel = document.getElementById(`label_${qIndex}_${correctIdx}`);
+            if(correctLabel) correctLabel.classList.add('correct_ans');
+            if (sel && parseInt(sel.value) === correctIdx) {
+                score++;
+            } else if (sel) {
+                const wrongLabel = document.getElementById(`label_${qIndex}_${sel.value}`);
+                if(wrongLabel) wrongLabel.classList.add('wrong_ans');
+            }
+            document.querySelectorAll(`input[name="q${qIndex}"]`).forEach(input => input.disabled = true);
+        });
+        
+        const res = document.getElementById('quiz_result');
+        res.style.display = "block";
+        const quizPercent = Math.round((score / currentQuestions.length) * 100);
+        const scoreText = `${score} من ${currentQuestions.length}`;
+        res.innerHTML = `✅ تم تسليم الإجابات بنجاح! <br> درجتك: ${scoreText} (${quizPercent}%)`;
+        res.style.background = "#d4edda";
+        
+        document.getElementById('submit_quiz_btn').style.display = "none";
+        const lTitle = document.getElementById('view_title').innerText;
+        localStorage.setItem(`quiz_done_${sCode}_${currentLectureId}`, "true");
+        
+        try {
+            await push(ref(db, 'attendance_logs'), {
+                student_code: sCode,
+                lecture: lTitle,
+                correct_questions: score, 
+                total_questions: currentQuestions.length,
+                quiz_percentage: quizPercent + "%",
+                status: "إنهاء كويز",
+                timestamp: new Date().toLocaleString('ar-EG')
+            });
+            showToast("✅ تم حفظ النتيجة في سجلاتك");
+        } catch(e) {
+            showToast("❌ خطأ أثناء حفظ النتيجة");
+        }
+    };
+
+    window.switchTab = (tab) => {
+        currentTab = tab;
+        document.querySelectorAll('.tab_btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tab + 'Tab').classList.add('active');
+        if (tab === 'offline' && !isPageUnlocked) {
+            document.getElementById('pageLock').style.display = 'flex';
+            document.getElementById('lessons_list').style.display = 'none';
+        } else {
+            document.getElementById('pageLock').style.display = 'none';
+            document.getElementById('lessons_list').style.display = 'grid';
+            fetchLectures();
+        }
+    };
+
+    window.verifyPageCode = async () => {
+        const pageCode = document.getElementById('pageCodeInput').value.trim();
+        const studentCode = document.getElementById('studentCodeInput').value.trim();
+        if (!pageCode || !studentCode) return showToast("⚠️ يرجى إدخال البيانات.");
+        let deviceFingerprint = localStorage.getItem('device_fingerprint');
+        if (!deviceFingerprint) {
+            deviceFingerprint = 'dev-' + Math.random().toString(36).substr(2, 9) + Date.now();
+            localStorage.setItem('device_fingerprint', deviceFingerprint);
+        }
+        try {
+            const allowedRef = ref(db, `allowed_codes/${pageCode}`);
+            const allowedSnapshot = await get(allowedRef);
+            if (!allowedSnapshot.exists()) return showToast("⚠️ كود غير صحيح.");
+            const boundRef = ref(db, `bound_codes/${pageCode}`);
+            const boundSnapshot = await get(boundRef);
+            if (boundSnapshot.exists()) {
+                const boundData = boundSnapshot.val();
+                if (boundData.student_code !== studentCode || boundData.device_id !== deviceFingerprint) {
+                    return showToast("⚠️ الكود مستخدم على جهاز آخر.");
+                }
+            } else {
+                await set(boundRef, {
+                    student_code: studentCode,
+                    device_id: deviceFingerprint,
+                    activation_date: new Date().toLocaleString('ar-EG'),
+                    status: "bound"
+                });
+            }
+            isPageUnlocked = true;
+            showToast("✅ تم الدخول");
+            switchTab('offline');
+        } catch (e) { showToast("حدث خطأ أثناء التحقق."); }
+    };
+
+    async function fetchLectures() {
+        const list = document.getElementById('lessons_list');
+        list.innerHTML = '<div class="loading">جاري التحميل...</div>';
+        
+        const savedCode = localStorage.getItem('studentCode');
+        let studentLvl = "";
+        let studentStg = "";
+
+        if(savedCode) {
             try {
-                const lecturesRef = ref(db, 'lectures'); 
-                const snapshot = await get(lecturesRef);
+                const sSnap = await get(ref(db, 'students/' + savedCode));
+                if(sSnap.exists()){
+                    studentLvl = cleanText(sSnap.val().LVL01);
+                    studentStg = cleanText(sSnap.val().STG01);
+                }
+            } catch(e) { console.error("Student check error", e); }
+        }
 
-                if (snapshot.exists()) {
-                    lessonsList.innerHTML = ''; 
-                    const data = snapshot.val();
+        try {
+            const snapshot = await get(ref(db, 'lectures'));
+            list.innerHTML = ''; 
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                lecturesDataCache = data; 
+                let hasContent = false;
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    const lecLvl = cleanText(item.level || "");
+                    const lecStg = cleanText(item.stage || "");
+                    const isLevelMatch = (lecLvl.includes(studentLvl) || studentLvl.includes(lecLvl)) && studentLvl !== "";
+                    const isStageMatch = (lecStg.includes(studentStg) || studentStg.includes(lecStg)) && studentStg !== "";
                     
-                    Object.keys(data).forEach(key => {
-                        const item = data[key];
-                        const title = item.title || item.Title || "محاضرة غير معنونة";
-                        const desc = item.description || item.Description || item.desc || "لا يوجد وصف حالياً.";
-                        const videoUrl = item.video_url || item.videoUrl || item.link || "#";
-                        let videoId = extractYouTubeId(videoUrl);
-                        let thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://via.placeholder.com/400x225/5D4037/FFFFFF?text=Lecture';
+                    if(!isLevelMatch || !isStageMatch) return;
 
-                        lessonsList.innerHTML += `
+                    const isOff = (item.category === 'اوفلاين' || item.category === 'offline');
+                    if ((currentTab === 'offline' && isOff) || (currentTab === 'online' && !isOff)) {
+                        hasContent = true;
+                        const videoId = extractYouTubeId(item.link || item.video_url || "");
+                        const thumb = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+                        list.innerHTML += `
                             <div class="lesson_card">
-                                <div class="video_thumbnail" onclick="window.open('${videoUrl}', '_blank')">
-                                    <img src="${thumbUrl}" alt="${title}">
+                                <div class="video_thumbnail" onclick="openLesson('${key}')">
+                                    <img src="${thumb}">
                                     <div class="play_icon">▶</div>
                                 </div>
                                 <div class="lesson_info">
-                                    <span class="lesson_title">${title}</span>
-                                    <p class="lesson_desc">${desc}</p>
-                                    <a href="${videoUrl}" target="_blank" class="watch_btn">مشاهدة المحاضرة</a>
+                                    <span class="lesson_title">${item.title}</span>
+                                    <button onclick="openLesson('${key}')" class="watch_btn">مشاهدة</button>
                                 </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    lessonsList.innerHTML = '<div class="loading">لا توجد محاضرات في قسم (lectures) حالياً.</div>';
-                }
-            } catch (error) {
-                console.error(error);
-                lessonsList.innerHTML = '<div class="loading">خطأ في الاتصال بقاعدة البيانات.</div>';
+                            </div>`;
+                    }
+                });
+                if(!hasContent) list.innerHTML = '<div class="no_data">لا توجد محاضرات متاحة لمستواك حالياً.</div>';
             }
-        }
+        } catch (e) { list.innerHTML = 'خطأ في التحميل'; }
+    }
 
-        function extractYouTubeId(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
+    function extractYouTubeId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
 
-        window.onload = () => {
-            applyTheme(); // تفعيل الثيم عند التحميل
-            fetchLectures();
-        };
-    </script>
+    // إضافة هذه الأسطر لضمان عمل الأزرار برمجياً
+    document.getElementById('submitBtn').addEventListener('click', () => window.verifyPageCode());
+    document.getElementById('onlineTab').addEventListener('click', () => window.switchTab('online'));
+    document.getElementById('offlineTab').addEventListener('click', () => window.switchTab('offline'));
+
+    window.addEventListener('load', () => { fetchLectures(); });
+    fetchLectures();
+</script>
 </body>
 </html>
