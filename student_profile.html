@@ -249,7 +249,7 @@
             </li>
             <li><a href="#" onclick="navigateWithCode('edit_profile.html')">⚙️ تعديل البيانات</a></li>
             <li><a href="#" onclick="navigateWithCode('contact.html')">📞 تواصل معنا</a></li>
-            <li><a href="index.html" class="logout_link">🚪 تسجيل الخروج</a></li>
+            <li><a href="#" onclick="logout()" class="logout_link">🚪 تسجيل الخروج</a></li>
         </ul>
     </div>
 
@@ -334,7 +334,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // وظيفة مراقبة الرسائل المفلترة
         function listenForMessages() {
             const studentCode = localStorage.getItem('studentCode'); 
             const messagesRef = ref(db, 'announcements');
@@ -378,7 +377,6 @@
 
         async function loadStudentData() {
             const urlParams = new URLSearchParams(window.location.search);
-            // تعديل ذكي: لو مفيش كود في الرابط، خده من الـ LocalStorage اللي سجلناه في صفحة الدفع
             let studentCode = urlParams.get('code') || localStorage.getItem('studentCode');
 
             if (!studentCode) {
@@ -386,7 +384,12 @@
                 return;
             }
 
-            localStorage.setItem('studentCode', studentCode);
+            // إذا دخل الطالب ومع الكود في الرابط، نحفظه ثم نمسحه من الرابط فوراً لمظهر احترافي
+            if (urlParams.has('code')) {
+                localStorage.setItem('studentCode', studentCode);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             listenForMessages();
 
             try {
@@ -403,6 +406,9 @@
                     if (data.IMG_URL) {
                         document.getElementById('profile_image').src = data.IMG_URL;
                     }
+                } else {
+                    localStorage.removeItem('studentCode');
+                    window.location.href = "index.html";
                 }
             } catch (error) { console.error(error); }
         }
@@ -421,12 +427,14 @@
             loadStudentData();     
         };
 
+        // تم التعديل هنا لمنع ظهور الكود في الرابط
         window.navigateWithCode = function(pageName) {
             const code = localStorage.getItem('studentCode');
             if (code) {
-                window.location.href = `${pageName}?code=${code}`;
-            } else {
+                // نتوجه للصفحة مباشرة بدون ?code=
                 window.location.href = pageName;
+            } else {
+                window.location.href = "index.html";
             }
         }
 
@@ -440,6 +448,11 @@
         window.toggleMenu = function() {
             document.getElementById('sideMenu').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
+        }
+
+        window.logout = function() {
+            localStorage.removeItem('studentCode');
+            window.location.href = "index.html";
         }
     </script>
 </body>

@@ -12,19 +12,17 @@
             --text01: #334155;
             --box-bg: #ffffff;
             --input-bg: #f1f5f9;
-            --wa-green: #25D366;
-            --tg-blue: #0088cc;
             --success-color: #10b981;
         }
 
-        /* تعديل ألوان الدارك مود (رمادي فحم بدلاً من الكحلي) */
+        /* إعادة ألوان الدارك مود الأصلية (الكحلي الداكن) */
         body.dark_mode_active {
-            --bg01: #121212;         /* خلفية سوداء كربونية */
-            --primary01: #ffffff;    /* نصوص العناصر الأساسية */
-            --accent01: #d4af37;    /* لون ذهبي ثابت */
-            --text01: #e0e0e0;       /* لون نص رمادي فاتح */
-            --box-bg: #1e1e1e;      /* لون صناديق رمادي غامق جداً */
-            --input-bg: #2d2d2d;     /* لون الحقول */
+            --bg01: #0f172a;         /* خلفية كحلي غامق جداً */
+            --primary01: #f8fafc;    /* نصوص فاتحة */
+            --accent01: #d4af37;    /* ذهبي */
+            --text01: #cbd5e1;       /* نص رمادي مزرق فاتح */
+            --box-bg: #1e293b;      /* صناديق كحلي */
+            --input-bg: #334155;     /* حقول إدخال أغمق قليلاً */
         }
 
         body {
@@ -52,23 +50,6 @@
 
         h3 { margin-top: 0; color: var(--accent01); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; font-size: 1.25rem; }
 
-        .direct_links { display: flex; gap: 10px; margin-bottom: 20px; }
-        .link_card {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 14px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            font-size: 0.95rem;
-            transition: transform 0.2s;
-        }
-        .link_card:active { transform: scale(0.96); }
-
         .contact_form { display: flex; flex-direction: column; gap: 12px; }
         .contact_form input, .contact_form textarea {
             background: var(--input-bg);
@@ -88,7 +69,7 @@
 
         .submit_btn {
             background: var(--primary01);
-            color: var(--bg01); /* ليكون لون النص معاكس للخلفية */
+            color: var(--bg01);
             border: none;
             padding: 15px;
             border-radius: 10px;
@@ -102,7 +83,6 @@
             gap: 8px;
         }
         
-        /* معالجة لون النص في الزر للوضع الفاتح */
         body:not(.dark_mode_active) .submit_btn {
             color: #ffffff;
             background: #1e293b;
@@ -110,9 +90,6 @@
 
         .submit_btn:hover { opacity: 0.9; transform: translateY(-2px); }
         .submit_btn:active { transform: translateY(0); }
-
-        .wa { background: var(--wa-green); }
-        .tg { background: var(--tg-blue); }
 
         #custom_toast {
             position: fixed;
@@ -149,10 +126,6 @@
     
     <div class="section_box inquiry_box">
         <h3>قسم الاستفسارات 💬</h3>
-        <div class="direct_links">
-            <a href="https://wa.me/201000000000" class="link_card wa">واتساب</a>
-            <a href="https://t.me/YourUser" class="link_card tg">تليجرام</a>
-        </div>
         
         <form class="contact_form" id="inquiryForm">
             <input type="text" id="inq_name" placeholder="الاسم بالكامل" required>
