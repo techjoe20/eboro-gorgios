@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة أكواد الدخول | النظام المركزي</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --admin-color: #1e293b; --accent-color: #d4af37; --bg-color: #f8fafc; 
+            --text-main: #334155; --success: #10b981; --danger: #ef4444; --info: #3b82f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: var(--text-main); }
+        
+        .header { background: linear-gradient(135deg, var(--admin-color) 0%, #334155 100%); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        
+        .msg_form { background: white; padding: 30px; border-radius: 20px; max-width: 900px; margin: 0 auto; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .code-input { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 15px; text-align: center; font-size: 1.5em; letter-spacing: 3px; background: #f1f5f9; font-family: monospace; box-sizing: border-box; }
+        
+        .btn-gen { width: 100%; padding: 15px; background: var(--admin-color); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 10px; font-size: 1.1em; }
+        .btn-gen:hover { background: var(--accent-color); color: var(--admin-color); }
+
+        .table_outer { background: white; border-radius: 15px; border: 1px solid #e2e8f0; overflow: hidden; margin-top: 20px; }
+        .table_responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        thead { background: #f8fafc; }
+
+        .code-badge { background:#e0f2fe; padding:5px 10px; border-radius:5px; font-family: monospace; font-weight: bold; color: var(--info); }
+        .status-claimed { color: var(--danger); font-weight: bold; display: block; }
+        .status-available { color: var(--success); font-weight: bold; }
+        .student-ref { font-size: 0.85em; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-top: 5px; display: inline-block; }
+        .btn-del { background: #fee2e2; color: var(--danger); border: 1px solid #fecaca; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+
+        .count-display { background: #f1f5f9; padding: 5px 15px; border-radius: 8px; font-weight: bold; border: 1px solid #e2e8f0; font-size: 0.9em; }
+
+        .bulk-ctrl { display: flex; gap: 10px; margin-bottom: 30px; }
+        .bulk-ctrl input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold; }
+        .bulk-ctrl button { flex: 2; padding: 10px; border-radius: 10px; border: none; background: var(--success); color: white; font-weight: bold; cursor: pointer; }
+
+        /* ستايل أدوات الحذف الجماعي */
+        .batch-actions { background: #fff5f5; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; border: 1px solid #fed7d7; }
+        .btn-del-bulk { background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .select-all-wrap { display: flex; align-items: center; gap: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h2 style="margin:0">مفاتيح الدخول 🔑</h2>
+            <p style="margin:5px 0 0; opacity:0.8">نظام حرق وتخصيص الأكواد المركزي</p>
+        </div>
+        <a href="admin-study.html" class="back-btn">العودة للرئيسية ⮕</a>
+    </div>
+
+    <div class="msg_form">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin:0">توليد أكواد جديدة</h3>
+            <div class="count-display">إجمالي الأكواد: <span id="total_codes_count" style="color:var(--info)">0</span></div>
+        </div>
+
+        <input type="text" id="new_entry_code" readonly placeholder="********" class="code-input">
+        <button class="btn-gen" id="btnAutoGenerate">توليد وحفظ كود واحد ✨</button>
+
+        <div class="bulk-ctrl">
+            <input type="number" id="bulk_count" min="1" max="50" value="5" placeholder="العدد">
+            <button id="btnBulkGenerate">توليد كمية أكواد دفعة واحدة 🚀</button>
+        </div>
+
+        <div class="batch-actions">
+            <label class="select-all-wrap">
+                <input type="checkbox" id="selectAllCodes" style="transform: scale(1.3);"> تحديد الكل
+            </label>
+            <button class="btn-del-bulk" id="btnDeleteSelected">حذف المحدد 🗑️</button>
+            <small style="color: #666;">(يتم الحذف من القسمين: المتاح والمحجوز)</small>
+        </div>
+        
+        <div class="table_outer">
+            <div class="table_responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>تحديد</th>
+                            <th>الكود</th>
+                            <th>تاريخ الإضافة</th>
+                            <th>الحالة / المستخدم</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="codes_table">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA03R-ytzQ26LhEDc2VKmJd_yFMHS2RRPg",
+            authDomain: "eboro-93073.firebaseapp.com",
+            databaseURL: "https://eboro-93073-default-rtdb.firebaseio.com",
+            projectId: "eboro-93073",
+            storageBucket: "eboro-93073.firebasestorage.app",
+            messagingSenderId: "502542505811",
+            appId: "1:502542505811:web:666af1eff94c5f1f9af3a6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        function generateRandomCode(length = 8) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) { result += chars.charAt(Math.floor(Math.random() * chars.length)); }
+            return result;
+        }
+
+        async function saveCodeToDB(code) {
+            return set(ref(db, 'allowed_codes/' + code), { 
+                code: code, 
+                dateAdded: new Date().toLocaleString('ar-EG'), 
+                timestamp: Date.now()
+            });
+        }
+
+        document.getElementById('btnAutoGenerate').onclick = async () => {
+            const newCode = generateRandomCode(8);
+            document.getElementById('new_entry_code').value = newCode;
+            try {
+                await saveCodeToDB(newCode);
+                Swal.fire('تم التوليد', 'الكود متاح الآن للاستخدام', 'success');
+            } catch (e) { Swal.fire('خطأ', 'فشل في حفظ الكود', 'error'); }
+        };
+
+        document.getElementById('btnBulkGenerate').onclick = async () => {
+            const count = parseInt(document.getElementById('bulk_count').value);
+            if (count < 1 || count > 100) return Swal.fire('تنبيه', 'يرجى اختيار عدد بين 1 و 100', 'warning');
+            Swal.fire({ title: 'جاري التوليد...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            try {
+                for (let i = 0; i < count; i++) {
+                    const newCode = generateRandomCode(8);
+                    await saveCodeToDB(newCode);
+                }
+                Swal.fire('نجاح', `تم توليد ${count} كود بنجاح`, 'success');
+            } catch (e) { Swal.fire('خطأ', 'حدثت مشكلة أثناء التوليد الجماعي', 'error'); }
+        };
+
+        function loadCodes() {
+            onValue(ref(db, 'allowed_codes'), (availSnap) => {
+                onValue(ref(db, 'bound_codes'), (boundSnap) => {
+                    onValue(ref(db, 'students'), (studentsSnap) => {
+                        const availData = availSnap.val() || {};
+                        const boundData = boundSnap.val() || {};
+                        const studentsData = studentsSnap.val() || {};
+                        let html = "";
+
+                        const total = Object.keys(availData).length + Object.keys(boundData).length;
+                        document.getElementById('total_codes_count').innerText = total;
+
+                        // الأكواد المحجوزة
+                        Object.keys(boundData).reverse().forEach(key => {
+                            const info = boundData[key];
+                            const sID = info.student_code;
+                            const sName = (studentsData[sID] && studentsData[sID].USR01) ? studentsData[sID].USR01 : "اسم غير مسجل";
+                            
+                            html += `
+                            <tr style="background-color: #fff8f8;">
+                                <td><input type="checkbox" class="code-checkbox" data-id="${key}" data-path="bound_codes"></td>
+                                <td><span class="code-badge" style="color:#ef4444; background:#fee2e2;">${key}</span></td>
+                                <td><small>تم الحجز</small></td>
+                                <td>
+                                    <span class="status-claimed">🚫 محجوز: ${sName}</span>
+                                    <span class="student-ref">ID: ${sID || '---'}</span>
+                                </td>
+                                <td><button class="btn-del" onclick="deleteEntry('${key}', 'bound_codes')">مسح السجل</button></td>
+                            </tr>`;
+                        });
+
+                        // الأكواد المتاحة
+                        Object.keys(availData).sort((a,b) => availData[b].timestamp - availData[a].timestamp).forEach(key => {
+                            const c = availData[key];
+                            html += `
+                            <tr>
+                                <td><input type="checkbox" class="code-checkbox" data-id="${key}" data-path="allowed_codes"></td>
+                                <td><span class="code-badge">${c.code}</span></td>
+                                <td><small>${c.dateAdded}</small></td>
+                                <td><span class="status-available">✅ متاح للاستخدام</span></td>
+                                <td><button class="btn-del" onclick="deleteEntry('${key}', 'allowed_codes')">حذف</button></td>
+                            </tr>`;
+                        });
+
+                        document.getElementById('codes_table').innerHTML = html || "<tr><td colspan='5'>لا توجد بيانات</td></tr>";
+                    });
+                });
+            });
+        }
+
+        // وظيفة تحديد الكل
+        document.getElementById('selectAllCodes').onchange = function() {
+            const checkboxes = document.querySelectorAll('.code-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        };
+
+        // وظيفة الحذف الجماعي
+        document.getElementById('btnDeleteSelected').onclick = async () => {
+            const selected = document.querySelectorAll('.code-checkbox:checked');
+            if (selected.length === 0) return Swal.fire('تنبيه', 'يرجى تحديد الأكواد المراد حذفها أولاً', 'info');
+
+            const result = await Swal.fire({
+                title: 'حذف جماعي؟',
+                text: `أنت على وشك حذف ${selected.length} سجل نهائياً!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'نعم، احذف الكل'
+            });
+
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'جاري الحذف...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+                try {
+                    for (let cb of selected) {
+                        const id = cb.getAttribute('data-id');
+                        const path = cb.getAttribute('data-path');
+                        await remove(ref(db, `${path}/${id}`));
+                    }
+                    document.getElementById('selectAllCodes').checked = false;
+                    Swal.fire('تم بنجاح', 'تم تطهير السجلات المحددة', 'success');
+                } catch (e) {
+                    Swal.fire('خطأ', 'حدثت مشكلة أثناء الحذف', 'error');
+                }
+            }
+        };
+
+        window.deleteEntry = (id, path) => {
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: "سيتم حذف السجل نهائياً",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، حذف'
+            }).then((result) => {
+                if (result.isConfirmed) remove(ref(db, `${path}/${id}`));
+            });
+        };
+
+        loadCodes();
+    </script>
+</body>
+</html>
