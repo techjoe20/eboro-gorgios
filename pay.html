@@ -135,7 +135,7 @@
 
 <div id="loading" class="loading_overlay">
     <div style="width: 50px; height: 50px; border: 5px solid #ddd; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-    <p id="loading_text">جاري التحقق وتفعيل الحساب...</p>
+    <p id="loading_text">جاري تفعيل الحساب فوراً...</p>
 </div>
 
 <div class="payment_container">
@@ -151,7 +151,7 @@
     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
     <div id="orange_section">
-        <div class="instruction_box">حول المبلغ لـ <strong>010XXXXXXXX</strong> ثم ارفع البيانات أدناه.</div>
+        <div class="instruction_box">حول المبلغ لـ <strong>01201529126</strong> ثم ارفع البيانات أدناه.</div>
         <div class="form_group">
             <label>رقم الهاتف المسجل به </label>
             <input type="text" id="student_phone_orange" placeholder="01XXXXXXXXX">
@@ -171,7 +171,7 @@
             </label>
             <img id="preview_img" src="#">
         </div>
-        <button class="btn_submit" onclick="submitPayment('orange')">إرسال للمراجعة</button>
+        <button class="btn_submit" onclick="submitPayment('orange')">تفعيل فوري الآن</button>
     </div>
 
     <div id="cash_section">
@@ -230,81 +230,97 @@
     };
 
     window.submitPayment = async (method) => {
-        document.getElementById('loading').style.display = 'flex';
+        const loadingOverlay = document.getElementById('loading');
+        loadingOverlay.style.display = 'flex';
         
         try {
+            let phoneToQuery = "";
+            let extraData = {};
+
             if(method === 'orange') {
-                const phoneReg = document.getElementById('student_phone_orange').value.trim();
+                phoneToQuery = document.getElementById('student_phone_orange').value.trim();
                 const sender = document.getElementById('sender_phone').value.trim();
                 const process = document.getElementById('process_id').value.trim();
-
-                if(!phoneReg || !sender || !process || !base64Image) throw new Error('يرجى إكمال جميع البيانات');
-
-                await push(ref(db, 'payment_requests'), {
-                    TEL01: phoneReg,
-                    sender_phone: sender,
-                    process_id: process,
+                if(!phoneToQuery || !sender || !process || !base64Image) throw new Error('يرجى إكمال جميع بيانات التحويل والصورة');
+                
+                extraData = { 
+                    sender_phone: sender, 
+                    process_id: process, 
                     receipt_image: base64Image,
-                    status: "pending",
-                    timestamp: new Date().toLocaleString('ar-EG')
-                });
-
-                Swal.fire({ icon: 'success', title: 'تم الإرسال!', text: 'سيقوم المستر بمراجعة طلبك وتفعيلك قريباً.' })
-                .then(() => window.location.href = "index.html");
-
+                    method: "orange_cash" 
+                };
             } else {
-                const phone = document.getElementById('student_phone_cash').value.trim();
+                phoneToQuery = document.getElementById('student_phone_cash').value.trim();
                 const code = document.getElementById('cash_code').value.trim();
+                if(!phoneToQuery || !code) throw new Error('برجاء إدخال رقم الهاتف والكود');
 
-                if(!phone || !code) throw new Error('برجاء إدخال رقم الهاتف المسجل والكود');
+                // التحقق من الكود
+                let codeRef = ref(db, `cash_payment_codes/${code}`);
+                let codeSnap = await get(codeRef);
+                let foundCodePath = null;
 
-                // 1. التحقق من الكود
-                const codeRef = ref(db, `cash_payment_codes/${code}`);
-                const codeSnap = await get(codeRef);
-                if (!codeSnap.exists()) throw new Error('كود التفعيل غير صحيح أو تم استخدامه مسبقاً');
-
-                // 2. البحث عن الطالب
-                const studentsRef = ref(db, 'students');
-                const studentQuery = query(studentsRef, orderByChild('TEL01'), equalTo(phone));
-                const studentSnap = await get(studentQuery);
-
-                if (!studentSnap.exists()) throw new Error('رقم الهاتف هذا غير مسجل لدينا');
-
-                const studentsData = studentSnap.val();
-                const studentKey = Object.keys(studentsData)[0]; 
-
-                // 3. تحديث البيانات وحرق الكود
-                await update(ref(db, `students/${studentKey}`), { 
-                    status: "active",
-                    paymentMethod: "cash_code"
-                });
-                await remove(codeRef);
-
-                // 4. أهم تعديل: تنظيف الذاكرة تماماً وحفظ بيانات الطالب الجديد فقط
-                localStorage.clear(); // مسح أي طالب قديم كان مسجل
+                if (codeSnap.exists()) {
+                    foundCodePath = `cash_payment_codes/${code}`;
+                } else {
+                    const codesRef = ref(db, 'cash_payment_codes');
+                    const codeQuery = query(codesRef, orderByChild('code'), equalTo(code));
+                    const secondSnap = await get(codeQuery);
+                    if (secondSnap.exists()) {
+                        const key = Object.keys(secondSnap.val())[0];
+                        foundCodePath = `cash_payment_codes/${key}`;
+                    }
+                }
+                if (!foundCodePath) throw new Error('كود التفعيل غير صحيح');
                 
-                const updatedStudent = { ...studentsData[studentKey], status: "active", id: studentKey };
-                localStorage.setItem('studentCode', studentKey); // لحساب صفحة البروفايل
-                localStorage.setItem('loggedInStudent', JSON.stringify(updatedStudent));
-                
-                // 5. التوجيه لصفحة الملف الشخصي مع تمرير الكود في الرابط للتأكيد القاطع
-                Swal.fire({ 
-                    icon: 'success', 
-                    title: 'تم تفعيل حسابك!', 
-                    text: 'جاري تحويلك لملفك الشخصي...',
-                    timer: 2000,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.href = `student_profile.html?code=${studentKey}`; 
-                });
+                extraData = { activation_code: code, method: "cash_code", codePath: foundCodePath };
             }
+
+            // البحث عن الطالب وتفعيله (مشترك بين الطريقتين)
+            const studentsRef = ref(db, 'students');
+            const studentQuery = query(studentsRef, orderByChild('TEL01'), equalTo(phoneToQuery));
+            const studentSnap = await get(studentQuery);
+
+            if (!studentSnap.exists()) throw new Error('رقم الهاتف هذا غير مسجل لدينا');
+
+            const studentsData = studentSnap.val();
+            const studentKey = Object.keys(studentsData)[0]; 
+            const studentInfo = studentsData[studentKey];
+
+            const student_name_val = studentInfo.USR01 || studentInfo.NAME || studentInfo.student_name || "غير معروف";
+
+            const updates = {};
+            updates[`students/${studentKey}/status`] = "active";
+            updates[`students/${studentKey}/paymentMethod`] = extraData.method;
+            
+            updates[`paid_history/${studentKey}`] = {
+                student_name: student_name_val,
+                TEL01: phoneToQuery,
+                payment_date: new Date().toLocaleString('ar-EG'),
+                method: extraData.method,
+                ...extraData
+            };
+
+            await update(ref(db), updates);
+            
+            // لو كاش نحذف الكود
+            if(method === 'cash' && extraData.codePath) {
+                await remove(ref(db, extraData.codePath));
+            }
+
+            // حفظ الجلسة والدخول
+            localStorage.clear(); 
+            localStorage.setItem('studentCode', studentKey);
+            localStorage.setItem('loggedInStudent', JSON.stringify({ ...studentInfo, status: "active", id: studentKey }));
+            
+            loadingOverlay.style.display = 'none';
+            await Swal.fire({ icon: 'success', title: 'تم التفعيل بنجاح!', text: 'جاري دخولك الآن...', timer: 2000, showConfirmButton: false });
+            window.location.href = `student_profile.html?code=${studentKey}`;
+
         } catch (e) {
-            Swal.fire({ icon: 'error', title: 'خطأ', text: e.message, confirmButtonText: 'حسناً', direction: 'rtl' });
-        } finally {
-            document.getElementById('loading').style.display = 'none';
+            loadingOverlay.style.display = 'none';
+            Swal.fire({ icon: 'error', title: 'خطأ', text: e.message });
         }
     };
 </script>
-
 </body>
 </html>

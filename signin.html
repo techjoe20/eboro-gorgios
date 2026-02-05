@@ -181,12 +181,16 @@
         const loginForm = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
 
-        // دالة لتنظيف النص من المسافات الزائدة
-        const cleanText = (str) => str ? str.trim().replace(/\s+/g, ' ') : "";
+        // ميزة التنظيف: تزيل المسافات من الأطراف وتحول المسافات المتعددة لمسافة واحدة
+        const cleanText = (str) => {
+            if (!str) return "";
+            return str.toString().trim().replace(/\s+/g, ' ');
+        };
 
         loginForm.onsubmit = async (e) => {
             e.preventDefault();
             
+            // تنظيف المدخلات فوراً
             const nameInput = cleanText(document.getElementById('USR_NAME').value);
             const codeInput = cleanText(document.getElementById('STU_CODE').value);
 
@@ -194,16 +198,17 @@
             submitBtn.innerText = "جاري التحقق...";
 
             try {
-                const studentRef = ref(db, 'paid_history/' + codeInput);
-                const snapshot = await get(studentRef);
+                // البحث مباشرة في مسار paid_history باستخدام الكود المدخل
+                const paidRef = ref(db, 'paid_history/' + codeInput);
+                const snapshot = await get(paidRef);
 
                 if (snapshot.exists()) {
                     const studentData = snapshot.val();
                     
+                    // تنظيف الاسم القادم من قاعدة البيانات لضمان التطابق
                     const dbName = cleanText(studentData.student_name);
-                    const dbCode = cleanText(studentData.student_code);
 
-                    if (dbName === nameInput && dbCode === codeInput) {
+                    if (dbName === nameInput) {
                         Swal.fire({
                             icon: 'success',
                             title: 'تم التحقق بنجاح',
@@ -211,13 +216,21 @@
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
+                            // تخزين البيانات للانتقال للملف الشخصي
+                            localStorage.setItem('studentCode', codeInput);
+                            localStorage.setItem('loggedInStudent', JSON.stringify(studentData));
+                            
+                            // التوجيه لصفحة الملف الشخصي مع تمرير الكود
                             window.location.href = `student_profile.html?code=${codeInput}`;
                         });
                     } else {
-                        throw new Error("الاسم غير مطابق للكود المسجل في سجلات الدفع");
+                        // طباعة القيم في Console للمبرمج لمراجعة الفروق الخفية
+                        console.log("مدخل:", nameInput);
+                        console.log("قاعدة البيانات:", dbName);
+                        throw new Error("الاسم غير مطابق للاسم المسجل في سجلات الدفع");
                     }
                 } else {
-                    throw new Error("هذا الكود غير موجود أو لم يتم تفعيله بعد");
+                    throw new Error("عذراً، هذا الكود غير موجود في سجلات الدفع المفعّلة");
                 }
 
             } catch (error) {
