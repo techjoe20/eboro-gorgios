@@ -105,6 +105,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // --- وظيفة جلب الكوكيز ---
+    function getCookie(name) {
+        let nameEQ = name + "=";
+        let ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
     // وظيفة تطبيق الدارك مود
     function applySavedTheme() {
         const savedTheme = localStorage.getItem('theme');
@@ -122,8 +134,13 @@
 
     async function init() {
         applySavedTheme(); // استدعاء الدارك مود عند التشغيل
-        const code = localStorage.getItem('studentCode') || new URLSearchParams(window.location.search).get('code');
-        if (!code) { window.location.href = "login.html"; return; }
+        
+        // الأولوية للكوكيز أولاً ثم الـ LocalStorage ثم الرابط
+        const code = getCookie('studentCode') || 
+                     localStorage.getItem('studentCode') || 
+                     new URLSearchParams(window.location.search).get('code');
+                     
+        if (!code) { window.location.href = "index.html"; return; }
 
         try {
             const sSnap = await get(ref(db, 'students/' + code));

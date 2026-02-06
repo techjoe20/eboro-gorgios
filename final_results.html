@@ -117,29 +117,42 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // الوظيفة المسؤولة عن قراءة المظهر عند التحميل
-    function applyTheme() {
+    // --- نظام التخزين (localStorage) ---
+
+    // 1. تطبيق المظهر وحفظ الكود المكتوب عند التحميل
+    window.addEventListener('DOMContentLoaded', () => {
+        // استرجاع المظهر
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
         }
-    }
-    applyTheme();
+        
+        // استرجاع آخر كود تم البحث عنه
+        const savedCode = localStorage.getItem('lastSearchedCode');
+        if (savedCode) {
+            document.getElementById('studentCodeInput').value = savedCode;
+        }
+    });
 
-    // الوظيفة المسؤولة عن التبديل والحفظ في الـ localStorage
+    // 2. تبديل المظهر مع الحفظ
     window.toggleTheme = function() {
         document.body.classList.toggle('dark-mode');
         const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
         localStorage.setItem('theme', theme);
     }
 
+    // 3. جلب النتيجة مع حفظ الكود في الذاكرة
     window.fetchResult = async function() {
-        const code = document.getElementById('studentCodeInput').value.trim();
+        const codeInput = document.getElementById('studentCodeInput');
+        const code = codeInput.value.trim();
         const resultCard = document.getElementById('resultCard');
         
         if (!code) {
             Swal.fire('تنبيه', 'يرجى كتابة كود الطالب أولاً', 'info');
             return;
         }
+
+        // حفظ الكود في الذاكرة ليبقى حتى بعد الـ Reload
+        localStorage.setItem('lastSearchedCode', code);
 
         Swal.fire({ title: 'جاري البحث...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
 

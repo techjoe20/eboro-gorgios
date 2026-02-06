@@ -182,6 +182,18 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // --- وظيفة جلب الكوكيز ---
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
         // كود الـ Dark Mode للتعرف على الوضع المختار
         function applyTheme() {
             const savedTheme = localStorage.getItem('theme');
@@ -207,6 +219,13 @@
         const db = getDatabase(app);
 
         async function fetchMaterials() {
+            // التحقق من وجود الكود في الكوكيز أو التخزين المحلي لضمان الصلاحية
+            const code = getCookie('studentCode') || localStorage.getItem('studentCode');
+            if (!code) {
+                window.location.href = "index.html"; // توجيه لصفحة الدخول إذا لم يوجد كوكيز
+                return;
+            }
+
             const listDiv = document.getElementById('materialsList');
             
             try {

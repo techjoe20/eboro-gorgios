@@ -68,7 +68,6 @@
             text-decoration: none;
         }
 
-        /* زر الدارك مود العائم */
         .dark_mode_toggle {
             position: absolute;
             left: 15px;
@@ -349,7 +348,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // نظام الدارك مود من اللوكل هوست
+    // --- وظيفة جلب الكوكيز ---
+    function getCookie(name) {
+        let nameEQ = name + "=";
+        let ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
     window.toggleDarkMode = () => {
         const isDark = document.body.classList.toggle('dark-mode');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -425,7 +435,8 @@
         hasReportedAttendance = false;
         document.getElementById('student_code_section').style.display = 'none';
         
-        const savedCode = localStorage.getItem('studentCode') || "";
+        // استخدام الكوكيز هنا
+        const savedCode = getCookie('studentCode') || localStorage.getItem('studentCode') || "";
         document.getElementById('activeStudentCode').value = savedCode;
         
         updateTimerUI(0, 0);
@@ -468,7 +479,7 @@
     }
 
     async function updateStudentEvaluation(seconds, percent, status = "تحديث مشاهدة") {
-        const sCode = document.getElementById('activeStudentCode').value.trim() || localStorage.getItem('studentCode') || "guest";
+        const sCode = document.getElementById('activeStudentCode').value.trim() || getCookie('studentCode') || localStorage.getItem('studentCode') || "guest";
         const lTitle = document.getElementById('view_title').innerText;
         
         const evaluationData = {
@@ -537,7 +548,7 @@
             submitBtn.style.display = "none";
             return;
         }
-        const sCode = document.getElementById('activeStudentCode').value.trim() || localStorage.getItem('studentCode') || "guest";
+        const sCode = document.getElementById('activeStudentCode').value.trim() || getCookie('studentCode') || localStorage.getItem('studentCode') || "guest";
         const quizKey = `quiz_done_${sCode}_${currentLectureId}`;
         const isAlreadySolved = localStorage.getItem(quizKey);
         currentQuestions.forEach((q, qIndex) => {
@@ -569,7 +580,7 @@
 
     window.checkAnswers = async () => {
         const studentCodeInput = document.getElementById('activeStudentCode');
-        const sCode = studentCodeInput.value.trim() || localStorage.getItem('studentCode') || "";
+        const sCode = studentCodeInput.value.trim() || getCookie('studentCode') || localStorage.getItem('studentCode') || "";
         
         if(!sCode) {
             showToast("⚠️ يرجى إدخال كود الطالب أولاً لتسجيل النتيجة!");
@@ -633,6 +644,9 @@
         if (tab === 'offline' && !isPageUnlocked) {
             document.getElementById('pageLock').style.display = 'flex';
             document.getElementById('lessons_list').style.display = 'none';
+            // ملء كود الطالب تلقائياً من الكوكيز
+            const savedCode = getCookie('studentCode') || localStorage.getItem('studentCode') || "";
+            document.getElementById('studentCodeInput').value = savedCode;
         } else {
             document.getElementById('pageLock').style.display = 'none';
             document.getElementById('lessons_list').style.display = 'grid';
@@ -675,22 +689,26 @@
     };
 
     async function fetchLectures() {
+        // التأكد من وجود كود الطالب قبل الجلب
+        const savedCode = getCookie('studentCode') || localStorage.getItem('studentCode');
+        if (!savedCode) {
+             window.location.href = "index.html"; // توجيه لصفحة الدخول إذا لم يوجد كوكيز
+             return;
+        }
+
         const list = document.getElementById('lessons_list');
         list.innerHTML = '<div class="loading">جاري التحميل...</div>';
         
-        const savedCode = localStorage.getItem('studentCode');
         let studentLvl = "";
         let studentStg = "";
 
-        if(savedCode) {
-            try {
-                const sSnap = await get(ref(db, 'students/' + savedCode));
-                if(sSnap.exists()){
-                    studentLvl = cleanText(sSnap.val().LVL01);
-                    studentStg = cleanText(sSnap.val().STG01);
-                }
-            } catch(e) { console.error("Student check error", e); }
-        }
+        try {
+            const sSnap = await get(ref(db, 'students/' + savedCode));
+            if(sSnap.exists()){
+                studentLvl = cleanText(sSnap.val().LVL01);
+                studentStg = cleanText(sSnap.val().STG01);
+            }
+        } catch(e) { console.error("Student check error", e); }
 
         try {
             const snapshot = await get(ref(db, 'lectures'));
@@ -737,7 +755,6 @@
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
-    // إضافة هذه الأسطر لضمان عمل الأزرار برمجياً
     document.getElementById('submitBtn').addEventListener('click', () => window.verifyPageCode());
     document.getElementById('onlineTab').addEventListener('click', () => window.switchTab('online'));
     document.getElementById('offlineTab').addEventListener('click', () => window.switchTab('offline'));

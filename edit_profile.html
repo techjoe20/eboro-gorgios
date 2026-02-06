@@ -32,7 +32,7 @@
         input:checked + .slider:before { transform: translateX(21px); }
         
         .btn-save { width: 100%; padding: 15px; background: var(--primary-color); color: rgb(0, 0, 0); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
-        .btn-theme { background: #1e293b; color: rgb(255, 255, 255); } /* لون مميز لزر الثيم */
+        .btn-save btn-theme { background: #1e293b; color: rgb(255, 255, 255); }
         body.dark-mode .btn-theme { background: #D4AF37; color: #121212; }
     </style>
 </head>
@@ -93,6 +93,18 @@
     }
     const database = firebase.database();
 
+    // --- وظيفة جلب الكوكيز ---
+    function getCookie(name) {
+        let nameEQ = name + "=";
+        let ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
     const darkModeToggle = document.getElementById('darkModeToggle');
     function applySavedTheme() {
         const savedTheme = localStorage.getItem('theme') || 'light';
@@ -107,13 +119,16 @@
     });
 
     async function loadStudentData() {
-        const code = localStorage.getItem('userCode') || 
+        // الأولوية للكوكيز 'studentCode' لضمان الأمان
+        const code = getCookie('studentCode') || 
+                     localStorage.getItem('userCode') || 
                      localStorage.getItem('studentCode') || 
                      localStorage.getItem('user_id') ||
                      localStorage.getItem('code');
 
         if (!code) {
             document.getElementById('displayUserName').innerText = "غير مسجل";
+            window.location.href = "index.html"; // توجيه لصفحة الدخول إذا لم يوجد كود
             return;
         }
 

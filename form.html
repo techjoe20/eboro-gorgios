@@ -135,6 +135,38 @@
         const uploadStatus = document.getElementById('uploadStatus');
         const imgPreview = document.getElementById('imgPreview');
 
+        // --- وظيفة الكوكيز / التخزين المحلي ---
+        const saveToLocal = () => {
+            const draftData = {
+                USR01: document.getElementById('USR01').value,
+                TEL01: document.getElementById('TEL01').value,
+                TEL02: document.getElementById('TEL02').value,
+                ADR01: document.getElementById('ADR01').value,
+                FR01: document.getElementById('FR01').value,
+                YR01: document.getElementById('YR01').value,
+                STG01: document.getElementById('STG01').value,
+                RNK01: document.getElementById('RNK01').value,
+                BISH01: document.getElementById('BISH01').value,
+                LVL01: document.getElementById('LVL01').value
+            };
+            localStorage.setItem('form_draft', JSON.stringify(draftData));
+        };
+
+        const loadFromLocal = () => {
+            const savedData = localStorage.getItem('form_draft');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                Object.keys(data).forEach(key => {
+                    if(document.getElementById(key)) document.getElementById(key).value = data[key];
+                });
+            }
+        };
+
+        // استدعاء البيانات المحفوظة عند فتح الصفحة
+        window.onload = loadFromLocal;
+        // حفظ البيانات تلقائياً عند أي تغيير في الحقول
+        form.oninput = saveToLocal;
+
         fileInput.onchange = () => { 
             const file = fileInput.files[0];
             if (file) {
@@ -169,7 +201,6 @@
                 age--;
             }
 
-            // شرط العمر: إذا لم يتحقق، لا يتم تنفيذ أي كود إرسال للفايربيز
             if (age < 8) {
                 Swal.fire({
                     icon: 'error',
@@ -207,10 +238,11 @@
                     DATE_REF: new Date().toLocaleString()
                 };
 
-                // حفظ البيانات فوراً في قاعدة البيانات
                 await set(dbRef(db, 'students/' + randomID), studentData);
 
-                // بعد نجاح الحفظ، ننتقل لصفحة الدفع
+                // مسح البيانات المحفوظة محلياً بعد نجاح الإرسال
+                localStorage.removeItem('form_draft');
+
                 Swal.fire({ 
                     icon: 'success', 
                     title: 'تم تسجيل بياناتك بنجاح', 

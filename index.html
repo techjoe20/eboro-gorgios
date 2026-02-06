@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>موقع مدرسة ابؤوروجيؤورجيوس</title>
+    
+    <script>
+        function getPersistentData(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+            }
+            return localStorage.getItem(name);
+        }
+
+        // الفحص الفوري: إذا كان الكود موجوداً، انتقل لصفحة البروفايل فوراً
+        const savedCode = getPersistentData('studentCode');
+        if (savedCode) {
+            // استبدل 'profile.html' باسم الصفحة التي تريد توجيه الطالب إليها
+            window.location.replace("profile.html"); 
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     

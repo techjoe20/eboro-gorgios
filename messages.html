@@ -146,6 +146,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // --- وظيفة جلب الكوكيز ---
+    function getCookie(name) {
+        let nameEQ = name + "=";
+        let ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
     function getReadMessages() {
         return JSON.parse(localStorage.getItem('read_announcements') || '[]');
     }
@@ -174,12 +186,9 @@
             ...cachedData[key]
         })).sort((a, b) => b.timestamp - a.timestamp);
 
-        // الفلترة لضمان ظهور العام (all) والخاص (studentCode)
         const filteredMsgs = msgsArray.filter(msg => {
             const target = String(msg.target || "").trim().toLowerCase();
             const studentCode = String(userStudentCode).trim().toLowerCase();
-            
-            // الشرط: إذا كان الهدف للكل OR إذا كان الهدف هو كود الطالب تحديداً
             return target === "all" || target === studentCode;
         });
 
@@ -205,20 +214,22 @@
 
     async function initPage() {
         const urlParams = new URLSearchParams(window.location.search);
-        const studentKey = urlParams.get('code');
+        
+        // الأولوية للكوكيز ثم الرابط ثم التخزين المحلي
+        const studentKey = getCookie('studentCode') || 
+                           urlParams.get('code') || 
+                           localStorage.getItem('studentCode');
 
         if (!studentKey) {
-            document.getElementById('msgList01').innerHTML = `<div class="empty_state">خطأ في تحديد الهوية</div>`;
+            document.getElementById('msgList01').innerHTML = `<div class="empty_state">خطأ في تحديد الهوية.. يرجى تسجيل الدخول</div>`;
             return;
         }
 
         try {
-            // جلب الـ STUDENT_CODE من فرع الطلاب للمقارنة به
             const studentRef = ref(db, 'students/' + studentKey);
             const snapshot = await get(studentRef);
             
             if (snapshot.exists()) {
-                // نأخذ الـ STUDENT_CODE أو نستخدم مفتاح الدخول كاحتياطي
                 userStudentCode = snapshot.val().STUDENT_CODE || studentKey;
             } else {
                 userStudentCode = studentKey;

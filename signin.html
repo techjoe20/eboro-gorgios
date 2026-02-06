@@ -181,7 +181,18 @@
         const loginForm = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
 
-        // ميزة التنظيف: تزيل المسافات من الأطراف وتحول المسافات المتعددة لمسافة واحدة
+        // --- دالة حفظ الكوكيز ---
+        const setCookie = (name, value, days) => {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            // SameSite=Lax لضمان التوافق والأمان في المتصفحات الحديثة
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        };
+
         const cleanText = (str) => {
             if (!str) return "";
             return str.toString().trim().replace(/\s+/g, ' ');
@@ -190,7 +201,6 @@
         loginForm.onsubmit = async (e) => {
             e.preventDefault();
             
-            // تنظيف المدخلات فوراً
             const nameInput = cleanText(document.getElementById('USR_NAME').value);
             const codeInput = cleanText(document.getElementById('STU_CODE').value);
 
@@ -198,14 +208,11 @@
             submitBtn.innerText = "جاري التحقق...";
 
             try {
-                // البحث مباشرة في مسار paid_history باستخدام الكود المدخل
                 const paidRef = ref(db, 'paid_history/' + codeInput);
                 const snapshot = await get(paidRef);
 
                 if (snapshot.exists()) {
                     const studentData = snapshot.val();
-                    
-                    // تنظيف الاسم القادم من قاعدة البيانات لضمان التطابق
                     const dbName = cleanText(studentData.student_name);
 
                     if (dbName === nameInput) {
@@ -216,15 +223,16 @@
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
-                            // تخزين البيانات للانتقال للملف الشخصي
+                            // --- تفعيل الكوكيز هنا (لمدة سنة) ---
+                            setCookie('studentCode', codeInput, 365);
+                            
+                            // الاحتفاظ بالـ localStorage لضمان عمل الصفحات القديمة
                             localStorage.setItem('studentCode', codeInput);
                             localStorage.setItem('loggedInStudent', JSON.stringify(studentData));
                             
-                            // التوجيه لصفحة الملف الشخصي مع تمرير الكود
                             window.location.href = `student_profile.html?code=${codeInput}`;
                         });
                     } else {
-                        // طباعة القيم في Console للمبرمج لمراجعة الفروق الخفية
                         console.log("مدخل:", nameInput);
                         console.log("قاعدة البيانات:", dbName);
                         throw new Error("الاسم غير مطابق للاسم المسجل في سجلات الدفع");

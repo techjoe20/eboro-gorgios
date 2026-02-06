@@ -224,6 +224,53 @@
     let warningsCount = 0;
     let isExamFinished = false;
 
+    // --- نظام الكوكيز (التخزين المحلي) ---
+    // حفظ البيانات الشخصية تلقائياً
+    const inputs = ['student_name', 'student_code', 'exam_selector'];
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', () => {
+            localStorage.setItem(id, el.value);
+        });
+    });
+
+    // تحميل البيانات عند فتح الصفحة
+    window.addEventListener('load', () => {
+        inputs.forEach(id => {
+            if(localStorage.getItem(id)) {
+                document.getElementById(id).value = localStorage.getItem(id);
+            }
+        });
+    });
+
+    // حفظ إجابات الطالب أثناء الحل
+    function saveDraftAnswers() {
+        const drafts = {};
+        currentExam.questions.forEach((q, idx) => {
+            if (q.type === 'mcq') {
+                const sel = document.querySelector(`input[name="q${idx}"]:checked`);
+                if (sel) drafts[`q${idx}`] = sel.value;
+            } else {
+                drafts[`q${idx}`] = document.getElementById(`q${idx}`).value;
+            }
+        });
+        localStorage.setItem('exam_draft_answers', JSON.stringify(drafts));
+    }
+
+    // استرجاع الإجابات المحفوظة
+    function loadDraftAnswers() {
+        const drafts = JSON.parse(localStorage.getItem('exam_draft_answers') || '{}');
+        Object.keys(drafts).forEach(key => {
+            const input = document.getElementById(key);
+            if (input && input.tagName === 'TEXTAREA') {
+                input.value = drafts[key];
+            } else {
+                const radio = document.querySelector(`input[name="${key}"][value="${drafts[key]}"]`);
+                if (radio) radio.checked = true;
+            }
+        });
+    }
+
     // جلب قائمة الامتحانات المتاحة
     async function loadExamsList() {
         const snap = await get(ref(db, 'exams'));
@@ -236,6 +283,10 @@
                 opt.innerText = exams[id].title;
                 selector.appendChild(opt);
             });
+            // إعادة اختيار الامتحان المحفوظ لو موجود
+            if(localStorage.getItem('exam_selector')) {
+                selector.value = localStorage.getItem('exam_selector');
+            }
         }
     }
     loadExamsList();
@@ -258,6 +309,7 @@
         document.getElementById('display_exam_title').innerText = currentExam.title;
 
         renderQuestions();
+        loadDraftAnswers(); // استرجاع أي حل قديم
         startTimer(currentExam.duration);
     };
 
@@ -271,16 +323,19 @@
             if (q.type === 'mcq') {
                 q.options.forEach((opt, i) => {
                     html += `<label>
-                        <input type="radio" name="q${idx}" value="${i}"> ${opt}
+                        <input type="radio" name="q${idx}" value="${i}" onchange="window.saveDraft()"> ${opt}
                     </label>`;
                 });
             } else {
-                html += `<textarea id="q${idx}" placeholder="اكتب إجابتك هنا..."></textarea>`;
+                html += `<textarea id="q${idx}" placeholder="اكتب إجابتك هنا..." oninput="window.saveDraft()"></textarea>`;
             }
             html += `</div>`;
             container.innerHTML += html;
         });
     }
+
+    // ربط وظيفة الحفظ بنافذة المتصفح لتعمل من الـ HTML
+    window.saveDraft = saveDraftAnswers;
 
     function startTimer(minutes) {
         timeRemaining = minutes * 60;
@@ -341,6 +396,11 @@
 
         try {
             await push(ref(db, 'exam_submissions'), submission);
+            
+            // مسح التخزين المحلي بعد التسجيل بنجاح
+            localStorage.removeItem('exam_draft_answers');
+            localStorage.removeItem('exam_selector');
+
             document.body.innerHTML = `
                 <div class="container">
                     <div class="end-screen">
